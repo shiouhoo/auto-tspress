@@ -1,0 +1,26 @@
+{
+  "name": "quick-tsdoc",
+  "version": "1.0.0",
+  "description": "快速生成项目中工具函数的文档",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --ext .js ."
+  },
+  "bin": {
+    "quick-tsdoc": "index.js"
+  },
+  "author": "shiouhoo",
+  "license": "MIT",
+  "devDependencies": {
+    "@shiouhoo/eslint-config": "^1.0.7",
+    "commander": "^11.0.0",
+    "eslint": "^8.47.0",
+    "minimist": "^1.2.8",
+    "ora": "^7.0.1"
+  },
+  "files": [
+    "utils/*",
+    "index.js"
+  ]
+}
