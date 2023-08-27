@@ -4,8 +4,9 @@
   "description": "快速生成项目中工具函数的文档",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint --ext .js ."
+    "lint": "eslint --ext .js .",
+    "build": "tsc",
+    "dev": "ts-node index"
   },
   "bin": {
     "quick-tsdoc": "index.js"
@@ -14,10 +15,15 @@
   "license": "MIT",
   "devDependencies": {
     "@shiouhoo/eslint-config": "^1.0.7",
+    "@tsconfig/node18": "^18.2.1",
+    "@types/node": "^20.5.6",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
     "commander": "^11.0.0",
     "eslint": "^8.47.0",
     "minimist": "^1.2.8",
-    "ora": "^7.0.1"
+    "ora": "^7.0.1",
+    "ts-morph": "^19.0.0"
   },
   "files": [
     "utils/*",

@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ES2015",
+        "moduleResolution": "node",
+        "outDir": "./lib",
+    },
+    "include": [
+        "index.ts",
+        "utils/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+    ],
+}

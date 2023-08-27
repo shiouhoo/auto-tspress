@@ -15,6 +15,6 @@ export const command = () => {
             console.log('start init project:', dirList);
         });
 
-    program.parse(process.argv);
+    return program;
 
 };
