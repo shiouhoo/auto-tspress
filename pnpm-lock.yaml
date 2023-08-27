@@ -6,8 +6,8 @@ settings:
 
 devDependencies:
   '@shiouhoo/eslint-config':
-    specifier: ^1.0.7
-    version: 1.0.7
+    specifier: ^1.0.8
+    version: 1.0.8
   '@tsconfig/node18':
     specifier: ^18.2.1
     version: 18.2.1
@@ -121,8 +121,8 @@ packages:
       fastq: 1.15.0
     dev: true
 
-  /@shiouhoo/eslint-config@1.0.7:
-    resolution: {integrity: sha512-sCrFkoD8VgGVqyO8WtVBdYX/wFL/NLSDwwAYFu6acePK8x2KrH79V4u6eKNVtAcmCxT4phqg9ze5vKRFJsrx5g==}
+  /@shiouhoo/eslint-config@1.0.8:
+    resolution: {integrity: sha512-tPEPnPJrOgC6o9wD+PfxyUM0Sohy713pGcFcV9OyJSIFAI5nR3sXcjlzIAw5QM6ZGTSuDgqkrfvGOBl2FlHzeg==}
     dev: true
 
   /@ts-morph/common@0.20.0:
