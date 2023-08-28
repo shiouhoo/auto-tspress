@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { command } from './utils/command';
 import { collect } from './utils/collect';
+// import { createDocs } from './utils/docs';
 
 const init = () => {
     const program = command();
@@ -13,6 +14,9 @@ const init = () => {
             const collectMap = collect(dirMap.dir);
 
             console.log(JSON.stringify(collectMap));
+
+            // createDocs();
+
         });
     program.parse(process.argv);
 

@@ -29,3 +29,5 @@ coverage
 
 index.js
 lib
+docs/.vitepress/dist
+docs/.vitepress/cache

@@ -5,7 +5,10 @@
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "tsc",
-    "dev": "ts-node index"
+    "dev": "ts-node index",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "bin": {
     "quick-tsdoc": "./lib/index.js"
@@ -22,7 +25,8 @@
     "eslint": "^8.47.0",
     "minimist": "^1.2.8",
     "ora": "^7.0.1",
-    "ts-morph": "^19.0.0"
+    "ts-morph": "^19.0.0",
+    "vitepress": "1.0.0-rc.9"
   },
   "files": [
     "utils/*",

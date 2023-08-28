@@ -6,7 +6,7 @@
     },
     "include": [
         "index.ts",
-        "utils/**/*"
+        "utils/**/*",
     ],
     "exclude": [
         "node_modules",
