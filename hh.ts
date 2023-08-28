@@ -1,9 +1,7 @@
-/**
- * sd
-  */
 export const test = ()=> {
     return 'hh';
 };
-export function test2(as: string) {
+
+export function test2() {
 
 }
