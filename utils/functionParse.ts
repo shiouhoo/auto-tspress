@@ -1,17 +1,14 @@
-import { FunctionDeclaration, VariableDeclaration } from 'ts-morph';
+import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { TypeObject, Params, Returns } from './../types/index';
 import { isBaseType } from './typeCheck';
 
 // 判断是否是函数
-export const varibleIsFunction = (declaration: VariableDeclaration) => {
-    const test = declaration.getText();
+export const varibleIsFunction = (variable: VariableStatement) => {
+    const test = variable.getText().split('\n')[0];
     return test.indexOf('=>') > -1 || test.indexOf('function') > -1;
 };
-/**
- *
- * @param {ParameterDeclaration} FunctionDeclaration
- * @returns 根据ParameterDeclaration 获取函参数列表
- */
+
+// 获取function参数列表
 export const getParamsList = (declaration: FunctionDeclaration, { typeChecker }) => {
     const params: Params = [];
     for (const param of declaration.getParameters()) {
@@ -41,8 +38,9 @@ export const getParamsList = (declaration: FunctionDeclaration, { typeChecker })
     }
     return params;
 };
+
 // 获取箭头函数参数列表
-export const getParamsListByVarible = (declaration: VariableDeclaration) => {
+export const getParamsListByVarible = (declaration: VariableStatement) => {
     const params: Params = [];
     const headerText: string = declaration.getText().split('\n')[0];
     const paramsList: string[] = headerText.match(/\((.*)\)/)[1].split(',');
@@ -58,11 +56,7 @@ export const getParamsListByVarible = (declaration: VariableDeclaration) => {
     }
     return params;
 };
-/**
- *
- * @param {获取函数返回值列表} parameterDeclaration
- * @returns 根据函数体获取函数返回值列表
- */
+//  根据function函数获取函数返回值列表
 export const getReturns = (declaration: FunctionDeclaration, { typeChecker }) => {
 
     const returnTypeNode = declaration.getReturnTypeNode();
@@ -92,8 +86,9 @@ export const getReturns = (declaration: FunctionDeclaration, { typeChecker }) =>
     }
     return returns;
 };
+
 // 获取箭头函数返回值
-export const getReturnsByVarible = (declaration: VariableDeclaration) => {
+export const getReturnsByVarible = (declaration: VariableStatement) => {
     let returns: Returns = null;
     const headerText: string = declaration.getText().split('\n')[0];
     const match = headerText.match(/\)\s?:(.*?)[{=>]/);

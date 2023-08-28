@@ -6,6 +6,10 @@ const init = () => {
     const program = command();
     program
         .action((dirMap: { dir: string }) => {
+            if(!dirMap.dir) {
+                console.log('文件路径为空');
+                return;
+            }
             const collectMap = collect(dirMap.dir);
 
             console.log(JSON.stringify(collectMap));

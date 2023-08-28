@@ -1,9 +1,9 @@
-/*
- *@ description  函数描述
- *@ params1: name {描述}
- *@ params2: name {描述}
- *@ return: type 描述
- */
-export const test = ()=>{
+/**
+ * sd
+  */
+export const test = ()=> {
     return 'hh';
 };
+export function test2(as: string) {
+
+}
