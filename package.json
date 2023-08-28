@@ -2,7 +2,6 @@
   "name": "quick-tsdoc",
   "version": "1.0.0",
   "description": "快速生成项目中工具函数的文档",
-  "type": "module",
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "tsc",
