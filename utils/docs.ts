@@ -3,9 +3,22 @@ import { spawn } from 'child_process';
 import { FunctionMap } from '../types';
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 
 const changeFile = (filePath: string, data: string) => {
     fs.writeFileSync(filePath, data, 'utf8');
+};
+
+const deleteFolderDocs = ()=> {
+    const folderPath = path.join(cliPath, 'docs/hooks');
+    if (fs.existsSync(folderPath)) {
+        fs.readdirSync(folderPath).forEach(function (file) {
+            const curPath = path.join(folderPath, file);
+            if (fs.existsSync(curPath) && fs.statSync(curPath).isFile()) {
+                fs.unlinkSync(curPath);
+            }
+        });
+    }
 };
 
 const createSidebar = (collectMap: Record<string, FunctionMap>) => {
@@ -30,7 +43,8 @@ const createContent = (filePath:string, content: FunctionMap) => {
     changeFile(filePath, JSON.stringify(content));
 };
 
-const createMarkdown = (collectMap: Record<string, FunctionMap>) => {
+const createMarkdown = async (collectMap: Record<string, FunctionMap>) => {
+    deleteFolderDocs();
     createSidebar(collectMap);
 };
 
