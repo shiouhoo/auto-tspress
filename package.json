@@ -2,20 +2,22 @@
   "name": "quick-tsdoc",
   "version": "1.0.0",
   "description": "快速生成项目中工具函数的文档",
+  "type": "module",
   "scripts": {
     "lint": "eslint --ext .ts .",
-    "build": "tsc",
-    "dev": "ts-node index",
+    "build": "rollup -c",
+    "dev": "pnpm build && node ./lib/index",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
   "bin": {
-    "quick-tsdoc": "./lib/index.js"
+    "quick-tsdoc": "./lib/index1.js"
   },
   "author": "shiouhoo",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.4",
     "@shiouhoo/eslint-config": "^1.0.8",
     "@tsconfig/node18": "^18.2.1",
     "@types/node": "^20.5.6",
@@ -23,9 +25,14 @@
     "@typescript-eslint/parser": "^6.4.1",
     "commander": "^11.0.0",
     "eslint": "^8.47.0",
+    "handlebars": "^4.7.8",
     "minimist": "^1.2.8",
     "ora": "^7.0.1",
+    "rollup": "^3.28.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-typescript2": "^0.35.0",
     "ts-morph": "^19.0.0",
+    "typescript": "^5.2.2",
     "vitepress": "1.0.0-rc.9"
   },
   "files": [

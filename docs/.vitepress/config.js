@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import hookConfig from '../hooks.js'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -18,9 +19,7 @@ export default defineConfig({
       '/hooks/': [
         {
           text: '组合式api',
-          items: [
-            { text: 'useFullScreen', link: '/hooks/fullScreen' },
-          ]
+          items: hookConfig.item 
         }
       ]
     },

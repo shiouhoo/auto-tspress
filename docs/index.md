@@ -3,7 +3,7 @@
 layout: home
 
 hero:
-  name: ""
+  name: "quick-docs"
   text: "hooks文档"
   tagline: 点击开始查看你的文档
   actions:
