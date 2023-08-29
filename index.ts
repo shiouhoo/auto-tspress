@@ -7,11 +7,11 @@ const init = () => {
     const program = command();
     program
         .action((dirMap: { dir: string }) => {
-            console.log('开始构建');
             if(!dirMap.dir) {
                 console.log('文件路径为空');
                 return;
             }
+            console.log('开始构建');
             const collectMap = collect(dirMap.dir);
 
             console.log('数据收集成功，开始生成文档');
@@ -19,6 +19,8 @@ const init = () => {
             createDocs(collectMap).then(() => {
 
                 console.log('文档生成成功,http://localhost:5173,请在浏览器中打开');
+            }).catch((err) => {
+                console.log(err);
             });
 
         });

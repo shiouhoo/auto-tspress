@@ -1,7 +1,8 @@
 import { cliPath } from './../global';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import { FunctionMap } from '../types';
 import fs from 'fs';
+import os from 'os';
 
 const changeFile = (filePath: string, data: string) => {
     fs.writeFileSync(filePath, data, 'utf8');
@@ -36,13 +37,25 @@ const createMarkdown = (collectMap: Record<string, FunctionMap>) => {
 export const createDocs = (collectMap: Record<string, FunctionMap>) => {
     createMarkdown(collectMap);
     return new Promise((resolve, reject) => {
-        exec(`cd ${cliPath} && npx vitepress dev docs`, (error) => {
-            if (error) {
-                reject(`执行出错: ${error}`);
-                return;
+        let child;
+
+        if (os.platform() === 'win32') {
+            // Windows
+            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && npx vitepress dev docs --port 5073`]);
+        } else {
+            // macOS 或 Linux
+            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && npx vitepress dev docs --port 5073`]);
+        }
+
+        child.stdout.on('data', (data) => {
+            console.log(`${data}`);
+            if(`${data}`.includes('http://localhost')) {
+                resolve('执行成功');
             }
-            resolve('执行成功');
         });
 
+        child.stderr.on('data', (data) => {
+            reject(`${data}`);
+        });
     });
 };
