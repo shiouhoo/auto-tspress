@@ -19,7 +19,7 @@ export type Returns = TypeItem
 export type FunctionMap = Record<string, {
     params: Params
     returns: Returns
-    docs: Record<string, string[]>
+    docs: Record<string, string[][]>
 }> | null
 
 export interface CollectMap {

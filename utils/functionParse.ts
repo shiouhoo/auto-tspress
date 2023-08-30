@@ -46,7 +46,7 @@ export const getParamsListByVarible = (declaration: VariableStatement) => {
     const paramsList: string[] = headerText.match(/\((.*)\)/)[1].split(',');
     for(const p of paramsList) {
         if(!p) continue;
-        const [name, type] = p.split(':');
+        const [name, type] = p.split(/[:=]/);
         if(isBaseType(type.trim())) {
             params.push({
                 name: name.trim(),

@@ -4,7 +4,7 @@ import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } fr
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
 
 // 更新一个函数声明
-function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: Params, returns: Returns, docMap:Record<string, string[]>, funcName: string) {
+function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: Params, returns: Returns, docMap:Record<string, string[][]>, funcName: string) {
     functionDeclarationMap = {
         ...functionDeclarationMap,
         [funcName]: {
@@ -18,10 +18,14 @@ function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: 
 // 收集jsDoc
 function collectDoc(doc: JSDoc) {
     if(!doc) return null;
-    const docMap:Record<string, string[]> = {};
+    const docMap:Record<string, string[][]> = {};
     for(const jsDocTag of doc.getTags()) {
-        const [tagName, ...rest] = jsDocTag.getText().trim().split(' ');
-        docMap[tagName] = rest;
+        const [tagName, ...rest] = jsDocTag.getText().replaceAll('*', '').trim().split(' ');
+        if(docMap[tagName]) {
+            docMap[tagName].push(rest);
+        }else{
+            docMap[tagName] = [rest];
+        }
     }
     return Object.keys(docMap).length ? docMap : null;
 }
