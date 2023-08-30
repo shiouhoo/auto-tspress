@@ -19,10 +19,14 @@ export type FunctionMap = Record<string, {
     docs: Record<string, string[][]>
 }> | null
 
-type types = Record<string, string>
+export interface TypeItem {
+    type: 'interface' | 'type' | 'enum'
+    value: Record<string, string> | string
+}
+
 export interface CollectMap {
     hooks: {
-        types: Record<string, types >,
+        types: Record<string, TypeItem>,
         value:Record<string, FunctionMap>,
     },
     utils: any,
@@ -33,8 +37,5 @@ export interface CollectMap {
      *      }
      * }
      *  */
-    globalTypes: Record<string, Record<string, {
-        type: 'interface' | 'type' | 'enum'
-        vale:Record<string, string>
-    }>>
+    globalTypes: Record<string, Record<string, TypeItem>>
 }
