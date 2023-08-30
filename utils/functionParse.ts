@@ -1,5 +1,5 @@
 import { FunctionDeclaration, VariableStatement } from 'ts-morph';
-import { TypeObject, Params, Returns } from './../types/index';
+import { Params, Returns } from './../types/index';
 import { isBaseType } from './typeCheck';
 
 // 判断是否是函数
@@ -9,93 +9,95 @@ export const varibleIsFunction = (variable: VariableStatement) => {
 };
 
 // 获取function参数列表
-export const getParamsList = (declaration: FunctionDeclaration, { typeChecker }) => {
+export const getParamsList = (declaration: FunctionDeclaration, useTypes:string[]) => {
     const params: Params = [];
     for (const param of declaration.getParameters()) {
-        const paramType = param.getType();
-        if (paramType.isInterface()) {
-            const properties = paramType.getProperties();
-
-            const inter:Record<string, TypeObject | string> = {};
-            for (const property of properties) {
-                inter[property.getEscapedName()] = typeChecker.getTypeOfSymbolAtLocation(property, property.getValueDeclaration()!).getText();
-            }
-
-            params.push({
-                name: param.getName(),
-                type: {
-                    isInterface: true,
-                    target: paramType.getText(),
-                    type: inter
-                }
-            });
-        }else{
-            params.push({
-                name: param.getName(),
-                type: param.getType().getText()
-            });
+        const data = {
+            name: param.getName(),
+            type: param.getType().getText(),
+            isBase: isBaseType(param.getType().getText().trim()),
+            isRequire: param.hasQuestionToken()
+        };
+        params.push(data);
+        if(!data.isBase) {
+            useTypes.push(data.type);
         }
     }
     return params;
 };
 
 // 获取箭头函数参数列表
-export const getParamsListByVarible = (declaration: VariableStatement) => {
+export const getParamsListByVarible = (declaration: VariableStatement, useTypes:string[]) => {
     const params: Params = [];
     const headerText: string = declaration.getText().split('\n')[0];
     const paramsList: string[] = headerText.match(/\((.*)\)/)[1].split(',');
-    for(const p of paramsList) {
+    for(let p of paramsList) {
         if(!p) continue;
-        const [name, type] = p.split(/[:=]/);
-        if(isBaseType(type.trim())) {
-            params.push({
-                name: name.trim(),
-                type
-            });
+
+        let isRequire = true;
+        let name = '';
+        let type = '';
+        let isBase = true;
+        if(p.includes('=')) {
+            if(p.includes('?')) {
+                isRequire = false;
+                p = p.replace('?', '');
+            }
+            [name, type] = p.split('=');
+        }else if(p.includes(':')) {
+            const [_name, ...rest] = p.split(/[:=]/);
+            name = _name;
+            type = rest.join('');
+        }else{
+            name = p.trim();
+            type = null;
         }
+        params.push({
+            name,
+            type,
+            isBase: (isBase = isBaseType(type)),
+            isRequire
+        });
+        if(!isBase) {
+            useTypes.push(type);
+        }
+
     }
     return params;
 };
 //  根据function函数获取函数返回值列表
-export const getReturns = (declaration: FunctionDeclaration, { typeChecker }) => {
+export const getReturns = (declaration: FunctionDeclaration, { typeChecker }, useTypes:string[]):Returns => {
 
     const returnTypeNode = declaration.getReturnTypeNode();
-    let returns: Returns = null;
+    let type = '';
+    let isBase = true;
     if(returnTypeNode) {
         const returnType = typeChecker.getTypeAtLocation(returnTypeNode);
-
-        if(returnType.isInterface()) {
-            const interfaceSymbol = returnType.getSymbol();
-            if (interfaceSymbol) {
-                const interfaceType = interfaceSymbol.getDeclaredType();
-                const properties = interfaceType.getProperties();
-                const p :Record<string, TypeObject | string> = {};
-                for (const property of properties) {
-                    p[property.getEscapedName()] = typeChecker.getTypeOfSymbolAtLocation(property, property.getValueDeclaration()!).getText();
-                }
-                returns = {
-                    isInterface: true,
-                    target: returnType.getText(),
-                    type: p
-                };
-
-            }
-        }else{
-            returns = returnType.getText();
+        type = returnType.getText();
+        if(!isBaseType(type)) {
+            useTypes.push(type);
+            isBase = false;
         }
     }
-    return returns;
+    return {
+        type,
+        isBase
+    };
 };
 
 // 获取箭头函数返回值
-export const getReturnsByVarible = (declaration: VariableStatement) => {
-    let returns: Returns = null;
+export const getReturnsByVarible = (declaration: VariableStatement, useTypes:string[]): Returns => {
     const headerText: string = declaration.getText().split('\n')[0];
     const match = headerText.match(/\)\s?:(.*?)[{=>]/);
-    if(!match) return returns;
+    if(!match) return null;
+    let isBase = true;
     const type = match[1].trim();
-    if(isBaseType(type)) {
-        returns = type;
+    if(!isBaseType(type)) {
+        useTypes.push(type);
+        isBase = false;
     }
-    return returns;
+    return {
+        type,
+        isBase
+    };
 };

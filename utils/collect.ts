@@ -3,6 +3,8 @@ import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } fr
 
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
 
+let useTypes = [];
+
 // 更新一个函数声明
 function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: Params, returns: Returns, docMap:Record<string, string[][]>, funcName: string) {
     functionDeclarationMap = {
@@ -38,8 +40,8 @@ function collectVaribleFunc(variable: VariableStatement) {
         return {};
     }
     // 获取参数和返回值
-    const params: Params = getParamsListByVarible(variable);
-    const returns: Returns = getReturnsByVarible(variable);
+    const params: Params = getParamsListByVarible(variable, useTypes);
+    const returns: Returns = getReturnsByVarible(variable, useTypes);
 
     return {
         params,
@@ -51,8 +53,8 @@ function collectFunctionDeclaration(variable: FunctionDeclaration, { typeChecker
     if(!variable.isExported()) return {};
 
     // 获取参数和返回值
-    const params: Params = getParamsList(variable, { typeChecker });
-    const returns: Returns = getReturns(variable, { typeChecker });
+    const params: Params = getParamsList(variable, useTypes);
+    const returns: Returns = getReturns(variable, { typeChecker }, useTypes);
 
     return {
         params,
@@ -84,13 +86,35 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }) {
     return functionDeclarationMap;
 }
 
+const collectTypes = (sourceFile: SourceFile, useTypes:string[])=>{
+    // 收集interface
+    const interfaces = sourceFile.getInterfaces();
+    for(const inter of interfaces) {
+        const interName = inter.getName();
+        if(!useTypes.includes(interName)) return {};
+        if(inter.isExported) {
+            // 获取接口的属性列表
+            const properties = inter.getProperties();
+            for (const property of properties) {
+                console.log(`Property: ${property.getName()}`);
+                console.log(`Type: ${property.getType().getText()}`);
+            }
+        }
+    }
+
+};
+
 export function collect(paths) {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
     const collectMap: CollectMap = {
-        hooks: {},
+        hooks: {
+            value: {},
+            types: {},
+        },
         utils: {},
-        interfaces: {}
+        interfaces: {},
+        globalTypes: {}
     };
 
     // 创建一个项目实例
@@ -105,8 +129,10 @@ export function collect(paths) {
     const sourceFiles = project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {
-
-        collectMap.hooks[sourceFile.getBaseName()] = collectFunctions(sourceFile, { typeChecker });
+        useTypes = [];
+        collectMap.hooks.value[sourceFile.getBaseName()] = collectFunctions(sourceFile, { typeChecker });
+        collectTypes(sourceFile, useTypes);
+        console.log(useTypes);
     }
     return collectMap;
 }

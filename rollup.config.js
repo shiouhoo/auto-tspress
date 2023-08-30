@@ -5,7 +5,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filenameNew = fileURLToPath(import.meta.url);
-
 const __dirnameNew = path.dirname(__filenameNew);
 
 // tsconfig.json合并选项
@@ -16,12 +15,12 @@ export default {
     input: 'index.ts',
     output: {
         file: path.resolve(__dirnameNew, 'lib/index.js'),
-        sourcemap: false, // ts中的sourcemap也得变为true
+        sourcemap: false,
 
     },
     plugins: [ // 这个插件是有执行顺序的
         ts({ tsconfig: './tsconfig.json', tsconfigOverride: override }),
         commonjs(),
-        terser()
+        terser(),
     ]
 };

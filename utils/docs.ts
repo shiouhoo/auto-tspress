@@ -85,7 +85,7 @@ const createSidebar = (collectMap: CollectMap) => {
                     data.link = `/${item}/${fileName}`;
                 }
                 // 生成对应的md文件
-                createContent(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key], item);
+                createContent(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key]);
             }
             const fileData = `export default ${JSON.stringify(data)}`;
             changeFile(filePath, fileData);
@@ -103,7 +103,7 @@ const createSidebar = (collectMap: CollectMap) => {
 };
 
 /** 生成md文档 */
-const createContent = (filePath:string, content: FunctionMap, type: string) => {
+const createContent = (filePath:string, content: FunctionMap) => {
     changeFile(filePath, JSON.stringify(content));
 };
 

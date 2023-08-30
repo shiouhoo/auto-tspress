@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "rollup -c",
+    "r": "node ./lib/index",
     "dev": "pnpm build && node ./lib/index",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
