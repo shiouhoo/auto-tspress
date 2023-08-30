@@ -3,7 +3,7 @@ export interface TypeObject {
     target: string
     type: Record<string, TypeObject | string>
 }
-
+/** 基本type类型 */
 export type TypeItem = TypeObject | string
 
 /** 参数类型 */
@@ -21,3 +21,9 @@ export type FunctionMap = Record<string, {
     returns: Returns
     docs: Record<string, string[]>
 }> | null
+
+export interface CollectMap {
+    hooks: Record<string, FunctionMap>,
+    utils: any,
+    interfaces: any,
+}

@@ -1,5 +1,5 @@
-import { FunctionMap, Params, Returns } from './../types/index';
-import { Project, VariableStatement, FunctionDeclaration, JSDoc } from 'ts-morph';
+import { FunctionMap, Params, Returns, CollectMap } from './../types/index';
+import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } from 'ts-morph';
 
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
 
@@ -15,7 +15,7 @@ function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: 
     };
     return functionDeclarationMap;
 }
-
+// 收集jsDoc
 function collectDoc(doc: JSDoc) {
     if(!doc) return null;
     const docMap:Record<string, string[]> = {};
@@ -56,10 +56,38 @@ function collectFunctionDeclaration(variable: FunctionDeclaration, { typeChecker
     };
 }
 
+function collectFunctions(sourceFile: SourceFile, { typeChecker }) {
+    let functionDeclarationMap: FunctionMap = null;
+    // 获取文件中的变量，判断箭头函数
+    const variableStatements = sourceFile.getVariableStatements();
+    for(const varible of variableStatements) {
+        const varibleName = varible.getDeclarationList().getDeclarations()[0].getName();
+        // 获取参数和返回值
+        const { params, returns } = collectVaribleFunc(varible);
+        if(!params && !returns) continue;
+        const docMap = collectDoc(varible.getJsDocs()[0]);
+        functionDeclarationMap = setFunctionDeclarationMap(functionDeclarationMap, params, returns, docMap, varibleName);
+    }
+    // 获取文件中的函数
+    const functions = sourceFile.getFunctions();
+    for(const functionDeclaration of functions) {
+        const funcName = functionDeclaration.getName();
+        // 获取参数和返回值
+        const { params, returns } = collectFunctionDeclaration(functionDeclaration, { typeChecker });
+        const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
+        functionDeclarationMap = setFunctionDeclarationMap(functionDeclarationMap, params, returns, docMap, funcName);
+    }
+    return functionDeclarationMap;
+}
+
 export function collect(paths) {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
-    const collectMap: Record<string, FunctionMap> = {};
+    const collectMap: CollectMap = {
+        hooks: {},
+        utils: {},
+        interfaces: {}
+    };
 
     // 创建一个项目实例
     const project = new Project();
@@ -73,27 +101,8 @@ export function collect(paths) {
     const sourceFiles = project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {
-        let functionDeclarationMap: FunctionMap = null;
-        // 获取文件中的变量，判断箭头函数
-        const variableStatements = sourceFile.getVariableStatements();
-        for(const varible of variableStatements) {
-            const varibleName = varible.getDeclarationList().getDeclarations()[0].getName();
-            // 获取参数和返回值
-            const { params, returns } = collectVaribleFunc(varible);
-            if(!params && !returns) continue;
-            const docMap = collectDoc(varible.getJsDocs()[0]);
-            functionDeclarationMap = setFunctionDeclarationMap(functionDeclarationMap, params, returns, docMap, varibleName);
-        }
-        // 获取文件中的函数
-        const functions = sourceFile.getFunctions();
-        for(const functionDeclaration of functions) {
-            const funcName = functionDeclaration.getName();
-            // 获取参数和返回值
-            const { params, returns } = collectFunctionDeclaration(functionDeclaration, { typeChecker });
-            const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
-            functionDeclarationMap = setFunctionDeclarationMap(functionDeclarationMap, params, returns, docMap, funcName);
-        }
-        collectMap[sourceFile.getBaseName()] = functionDeclarationMap;
+
+        collectMap.hooks[sourceFile.getBaseName()] = collectFunctions(sourceFile, { typeChecker });
     }
     return collectMap;
 }

@@ -9,7 +9,7 @@ hero:
   actions:
     - theme: brand
       text: 开始
-      link: /hooks/
+      link: {startpath}
 
 features:
   - title: 好看
@@ -19,4 +19,3 @@ features:
   - title: 便捷
     details: 支持通配符参数
 ---
-

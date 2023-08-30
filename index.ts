@@ -2,6 +2,7 @@
 import { command } from './utils/command';
 import { collect } from './utils/collect';
 import { createDocs } from './utils/docs';
+import { CollectMap } from './types';
 
 const init = () => {
     const program = command();
@@ -12,13 +13,12 @@ const init = () => {
                 return;
             }
             console.log('开始构建');
-            const collectMap = collect(dirMap.dir);
+            const collectMap: CollectMap = collect(dirMap.dir);
 
-            console.log('数据收集成功，开始生成文档');
+            console.log('数据收集成功，开始生成文档', collectMap);
 
             createDocs(collectMap).then(() => {
 
-                console.log('文档生成成功,http://localhost:5173,请在浏览器中打开');
             }).catch((err) => {
                 console.log(err);
             });
