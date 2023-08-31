@@ -27,7 +27,7 @@ export interface TypeItem {
 export interface CollectMap {
     hooks: {
         types: Record<string, TypeItem>,
-        value:Record<string, FunctionMap>,
+        value: Record<string, FunctionMap>,
     },
     utils: any,
     interfaces: any,

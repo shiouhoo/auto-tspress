@@ -61,7 +61,7 @@ function collectFunctionDeclaration(variable: FunctionDeclaration, { typeChecker
         returns
     };
 }
-
+// 搜集函数
 function collectFunctions(sourceFile: SourceFile, { typeChecker }) {
     let functionDeclarationMap: FunctionMap = null;
     // 获取文件中的变量，判断箭头函数
@@ -118,7 +118,7 @@ const collectInterfaceType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
     return { fileInterfaces, globalInterfaces };
 };
 
-// 搜集文件中的type
+// 搜集type关键字定义的类型
 const collectNameType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
 
     // 保存接口对应的属性列表
@@ -145,7 +145,7 @@ const collectNameType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
     return { globalTypes, fileTypes };
 };
 
-// 搜集文件中的枚举
+// 收集文件中的枚举
 const collectEnumType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
 
     // 保存对应的属性列表
@@ -176,24 +176,55 @@ const collectEnumType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
     }
     return { fileEnums, globalEnums };
 };
+// 收集import导入的类型
+const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
 
+    // 保存对应的属性列表
+    const fileImports:Record<string, TypeItem> = {};
+
+    const importDeclarations = sourceFile.getImportDeclarations();
+    for(const importDeclaration of importDeclarations) {
+        const name = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
+        if(name && Array.from(useTypes).some(element => element.includes(name))) {
+            fileImports[name] = {
+                value: 'any',
+                type: 'enum'
+            };
+        }
+        for(const specifier of importDeclaration.getNamedImports()) {
+            const name = specifier.getName();
+            if(Array.from(useTypes).some(element => element.includes(name))) {
+                fileImports[name] = {
+                    value: 'any',
+                    type: 'enum'
+                };
+            }
+        }
+    }
+    return Object.keys(fileImports).length ? fileImports : null;
+};
+// 收集文件中的类型
 const collectTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
     const { fileInterfaces, globalInterfaces } = collectInterfaceType(sourceFile, useTypes);
     const { globalTypes, fileTypes } = collectNameType(sourceFile, useTypes);
     const { globalEnums, fileEnums } = collectEnumType(sourceFile, useTypes);
+    const fileImports = collectImportTypes(sourceFile, useTypes);
     const fileType = {
         ...fileInterfaces,
         ...fileTypes,
-        ...fileEnums
+        ...fileEnums,
+        ...fileImports
     };
     const globalType = {
         ...globalInterfaces,
         ...globalTypes,
         ...globalEnums
     };
-    return { globalType, fileType };
+    return {
+        globalType: Object.keys(globalType).length ? globalType : null,
+        fileType: Object.keys(fileType).length ? fileType : null,
+    };
 };
-
 export function collect(paths) {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
@@ -202,7 +233,10 @@ export function collect(paths) {
             value: {},
             types: {},
         },
-        utils: {},
+        utils: {
+            value: {},
+            types: {},
+        },
         interfaces: {},
         globalTypes: {}
     };
@@ -221,9 +255,9 @@ export function collect(paths) {
     for (const sourceFile of sourceFiles) {
         // 搜集hooks用到过的接口类型
         useTypes = new Set<string>();
-        collectMap.hooks.value[sourceFile.getBaseName()] = collectFunctions(sourceFile, { typeChecker });
+        collectMap.utils.value[sourceFile.getBaseName()] = collectFunctions(sourceFile, { typeChecker });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
-        collectMap.hooks.types = fileType;
+        collectMap.utils.types = fileType;
         collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
         console.log(useTypes);
     }
