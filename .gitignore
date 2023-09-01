@@ -26,3 +26,15 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+index.js
+lib
+docs/.vitepress/dist
+docs/.vitepress/cache
+docs/hooks/*
+docs/utils/*
+docs/interfaces/*
+docs/index.md
+docs/hooks.js
+docs/utils.js
+docs/interfaces.js

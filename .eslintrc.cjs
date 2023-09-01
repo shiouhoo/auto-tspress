@@ -1,15 +1,25 @@
 module.exports = {
-    'env': {
-        'node': true,
-        'es2021': true
+    env: {
+        node: true,
+        es2021: true
     },
-    'extends': ['eslint:recommended', '@shiouhoo'],
-    'overrides': [
+    extends: [
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
+        '@shiouhoo'
     ],
-    'parserOptions': {
-        'ecmaVersion': 'latest',
-        'sourceType': 'module'
+    overrides: [
+    ],
+    parser: '@typescript-eslint/parser',
+    parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module'
     },
-    'rules': {
+    plugins: [
+        '@typescript-eslint'
+    ],
+    ignorePatterns: ['lib', 'docs/*.js'],
+    rules: {
+        '@typescript-eslint/no-explicit-any': 'warn',
     }
 };

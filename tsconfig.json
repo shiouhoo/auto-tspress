@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "es2022",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "allowSyntheticDefaultImports": true,
+        "outDir": "./lib",
+    },
+    "include": [
+        "index.ts",
+        "utils/**/*",
+    ],
+    "exclude": [
+        "node_modules",
+    ],
+}

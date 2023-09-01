@@ -10,11 +10,8 @@ export const command = () => {
         .version('1.0.0');
 
     program
-        .option('-d, --dir [list]', '文件夹路径')
-        .action((dirList) => {
-            console.log('start init project:', dirList);
-        });
+        .option('-d, --dir [list]', '文件夹路径');
 
-    program.parse(process.argv);
+    return program;
 
 };
