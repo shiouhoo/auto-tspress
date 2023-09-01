@@ -1,9 +1,10 @@
 import { cliPath } from './../global';
 import { spawn } from 'child_process';
-import { FunctionMap, CollectMap } from '../types';
+import { CollectMap, FileFunctionMap } from '../types';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { MdCreator } from './mdCreate';
 
 // 移动文件
 function copy(src, dest) {
@@ -23,9 +24,13 @@ function copyDir(srcDir:string, destDir:string) {
         copy(srcFile, destFile);
     }
 }
-
+// 写入文件内容
 const changeFile = (filePath: string, data: string) => {
-    fs.writeFileSync(filePath, data, 'utf8');
+    try{
+        fs.writeFileSync(filePath, data, 'utf8');
+    }catch(e) {
+        throw new Error('写入文件失败，请确保你有权限' + e);
+    }
 };
 
 /** 删除docs文件夹中原有的md文件 */
@@ -67,6 +72,7 @@ const changeFirstPage = (startPath: string)=>{
 const createSidebar = (collectMap: CollectMap) => {
     try{
         let startPath = '';
+        console.log(JSON.stringify(collectMap));
         for(const item of ['hooks', 'utils', 'interfaces']) {
             const filePath = path.join(cliPath, `/docs/${item}.js`);
             const data = {
@@ -74,7 +80,7 @@ const createSidebar = (collectMap: CollectMap) => {
                 link: `/${item}/`
             };
             // key 为文件名
-            for(const key in collectMap[item]) {
+            for(const key in collectMap[item] || {}) {
                 const fileName = key.split('.')[0];
                 data.item.push({
                     text: key,
@@ -85,14 +91,17 @@ const createSidebar = (collectMap: CollectMap) => {
                     data.link = `/${item}/${fileName}`;
                 }
                 // 生成对应的md文件
-                createContent(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key]);
+                if(item === 'utils') {
+                    createContentUtils(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key]);
+                }
             }
-            const fileData = `export default ${JSON.stringify(data)}`;
-            changeFile(filePath, fileData);
             // 这一项没有任何文档
-            if(!Object.keys(collectMap[item]).length) {
+            if(!collectMap[item] || !Object.keys(collectMap[item]).length) {
                 copy(path.join(cliPath, `/docs/.vitepress/index.md`), path.join(cliPath, `/docs/${item}/index.md`));
             }
+            // 改变目录
+            const fileData = `export default ${JSON.stringify(data)}`;
+            changeFile(filePath, fileData);
         }
         // 修改首页md文档
         changeFirstPage(startPath);
@@ -103,8 +112,17 @@ const createSidebar = (collectMap: CollectMap) => {
 };
 
 /** 生成md文档 */
-const createContent = (filePath:string, content: FunctionMap) => {
-    changeFile(filePath, JSON.stringify(content));
+const createContentUtils = (filePath:string, funcs: FileFunctionMap) => {
+    const mdCreator = new MdCreator();
+    // 函数
+    for(const funcName in funcs.value) {
+        const func = funcs.value[funcName];
+        mdCreator.createTitle(1, funcName);
+        mdCreator.createUtilsDescription(func.docs?.['@description']?.[0]?.[0] || '');
+        // mdCreator.createParams(func.params, func.docs);
+    }
+    console.log(2, filePath, JSON.stringify(mdCreator.content));
+    changeFile(filePath, mdCreator.content);
 };
 
 const createMarkdown = (collectMap: CollectMap) => {

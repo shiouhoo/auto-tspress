@@ -1,7 +1,7 @@
 {
-  "name": "quick-tsdoc",
+  "name": "tspress",
   "version": "1.0.0",
-  "description": "快速生成项目中工具函数的文档",
+  "description": "通过tsdoc快速生成项目中工具函数的文档",
   "type": "module",
   "scripts": {
     "lint": "eslint --ext .ts .",
@@ -13,7 +13,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "bin": {
-    "quick-tsdoc": "./lib/index1.js"
+    "tspress": "./lib/index1.js"
   },
   "author": "shiouhoo",
   "license": "MIT",

@@ -1,6 +1,6 @@
 import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params, Returns } from './../types/index';
-import { isBaseType } from './typeCheck';
+import { isBaseType } from './typeAction';
 
 // 判断是否是函数
 export const varibleIsFunction = (variable: VariableStatement) => {

@@ -12,12 +12,18 @@ export type Returns = {
     isBase: boolean
 }
 
-/** 一个文件的收集容器对象 */
+/** 一个函数的收集容器对象 */
 export type FunctionMap = Record<string, {
     params: Params
     returns: Returns
     docs: Record<string, string[][]>
 }> | null
+
+/** 一个函数的收集容器对象 */
+export type FileFunctionMap = {
+    types: Record<string, TypeItem>,
+    value: FunctionMap,
+}
 
 export interface TypeItem {
     type: 'interface' | 'type' | 'enum'
@@ -25,17 +31,14 @@ export interface TypeItem {
 }
 
 export interface CollectMap {
-    hooks: {
-        types: Record<string, TypeItem>,
-        value: Record<string, FunctionMap>,
-    },
-    utils: any,
-    interfaces: any,
-    /** 文件名：{
-     *      类型名：{
-     *          type: ''
-     *      }
+    /**
+     * 文件名：{
+     *     types:{},
+     *     value:{}
      * }
-     *  */
+     */
+    hooks: Record<string, FileFunctionMap>,
+    utils: Record<string, FileFunctionMap>,
+    interfaces: any,
     globalTypes: Record<string, Record<string, TypeItem>>
 }

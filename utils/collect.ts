@@ -1,7 +1,8 @@
 import { FunctionMap, Params, Returns, CollectMap, TypeItem } from './../types/index';
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } from 'ts-morph';
-
+import { gettypeInfosByExportName } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
+import path from 'path';
 
 let useTypes = new Set<string>();
 
@@ -62,7 +63,7 @@ function collectFunctionDeclaration(variable: FunctionDeclaration, { typeChecker
     };
 }
 // 搜集函数
-function collectFunctions(sourceFile: SourceFile, { typeChecker }) {
+function collectFunctions(sourceFile: SourceFile, { typeChecker }): FunctionMap | null {
     let functionDeclarationMap: FunctionMap = null;
     // 获取文件中的变量，判断箭头函数
     const variableStatements = sourceFile.getVariableStatements();
@@ -190,6 +191,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
                 value: 'any',
                 type: 'enum'
             };
+            gettypeInfosByExportName(path.join(sourceFile.getDirectoryPath(), importDeclaration.getModuleSpecifierValue()), name, true);
         }
         for(const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
@@ -204,7 +206,10 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
     return Object.keys(fileImports).length ? fileImports : null;
 };
 // 收集文件中的类型
-const collectTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
+const collectTypes = (sourceFile: SourceFile, useTypes: Set<string>): {
+    globalType: Record<string, TypeItem>,
+    fileType: Record<string, TypeItem>
+}=>{
     const { fileInterfaces, globalInterfaces } = collectInterfaceType(sourceFile, useTypes);
     const { globalTypes, fileTypes } = collectNameType(sourceFile, useTypes);
     const { globalEnums, fileEnums } = collectEnumType(sourceFile, useTypes);
@@ -230,15 +235,11 @@ export function collect(paths) {
     // 创建一个收集map, key为文件名, value为文件中的函数Map
     const collectMap: CollectMap = {
         hooks: {
-            value: {},
-            types: {},
         },
         utils: {
-            value: {},
-            types: {},
         },
         interfaces: {},
-        globalTypes: {}
+        globalTypes: null
     };
 
     // 创建一个项目实例
@@ -255,10 +256,15 @@ export function collect(paths) {
     for (const sourceFile of sourceFiles) {
         // 搜集hooks用到过的接口类型
         useTypes = new Set<string>();
-        collectMap.utils.value[sourceFile.getBaseName()] = collectFunctions(sourceFile, { typeChecker });
+        const funcs = collectFunctions(sourceFile, { typeChecker });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
-        collectMap.utils.types = fileType;
-        collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
+        collectMap.utils[sourceFile.getBaseName()] = {
+            value: funcs,
+            types: fileType
+        };
+        collectMap.globalTypes = {
+            [sourceFile.getBaseName()]: globalType
+        };
         console.log(useTypes);
     }
     return collectMap;
