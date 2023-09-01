@@ -5,7 +5,8 @@ import interfacesConfig from '../interfaces.js'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "hooks 文档",
+  lang: 'en-US',
+  title: "tspress 文档",
   description: "点击开始查看你的文档",
   themeConfig: {    
     nav: [

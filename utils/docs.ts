@@ -48,7 +48,7 @@ const deleteFolderDocs = ()=> {
             }
         }
     }catch(e) {
-        new ReferenceError('删除目录失败，请确保你有权限' + e);
+        throw new ReferenceError('删除目录失败，请确保你有权限' + e);
     }
 };
 
@@ -63,65 +63,74 @@ const changeFirstPage = (startPath: string)=>{
         fs.writeFileSync(path.join(cliPath, '/docs/index.md'), modifiedContent, 'utf8');
 
     }catch(err) {
-        new Error('修改首页文档失败:', err);
+        throw new Error('修改首页文档失败，请确保你有权限' + err);
     }
 
 };
 
 /** 生成文档侧边栏 */
 const createSidebar = (collectMap: CollectMap) => {
-    try{
-        let startPath = '';
-        console.log(JSON.stringify(collectMap));
-        for(const item of ['hooks', 'utils', 'interfaces']) {
-            const filePath = path.join(cliPath, `/docs/${item}.js`);
-            const data = {
-                item: [],
-                link: `/${item}/`
-            };
-            // key 为文件名
-            for(const key in collectMap[item] || {}) {
-                const fileName = key.split('.')[0];
-                data.item.push({
-                    text: key,
-                    link: `/${item}/${fileName}`
-                });
-                if(!startPath) {
-                    startPath = `/${item}/${fileName}`;
-                    data.link = `/${item}/${fileName}`;
-                }
-                // 生成对应的md文件
-                if(item === 'utils') {
-                    createContentUtils(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key]);
-                }
-            }
-            // 这一项没有任何文档
-            if(!collectMap[item] || !Object.keys(collectMap[item]).length) {
-                copy(path.join(cliPath, `/docs/.vitepress/index.md`), path.join(cliPath, `/docs/${item}/index.md`));
-            }
-            // 改变目录
-            const fileData = `export default ${JSON.stringify(data)}`;
-            changeFile(filePath, fileData);
+    let startPath = '';
+    for(const item of ['hooks', 'utils', 'interfaces']) {
+        if(!fs.existsSync(path.join(cliPath, `/docs/${item}`))) {
+            fs.mkdirSync(path.join(cliPath, `/docs/${item}`));
         }
-        // 修改首页md文档
-        changeFirstPage(startPath);
-    }catch(e) {
-        new ReferenceError('删除目录失败，请确保你有权限' + e);
+        const filePath = path.join(cliPath, `/docs/${item}.js`);
+        const data = {
+            item: [],
+            link: `/${item}/`
+        };
+            // key 为文件名
+        for(const key in collectMap[item] || {}) {
+            const fileName = key.split('.')[0];
+            data.item.push({
+                text: key,
+                link: `/${item}/${fileName}`
+            });
+            if(!startPath) {
+                startPath = `/${item}/${fileName}`;
+                data.link = `/${item}/${fileName}`;
+            }
+            // 生成对应的md文件
+            if(item === 'utils') {
+                createContentUtils(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key], key);
+            }
+        }
+        // 这一项没有任何文档
+        if(!collectMap[item] || !Object.keys(collectMap[item]).length) {
+            copy(path.join(cliPath, `/docs/.vitepress/index.md`), path.join(cliPath, `/docs/${item}/index.md`));
+        }
+        // 改变目录
+        const fileData = 'export default' + JSON.stringify(data, null, 4);
+        changeFile(filePath, fileData);
     }
+    // 修改首页md文档
+    changeFirstPage(startPath);
 
 };
 
-/** 生成md文档 */
-const createContentUtils = (filePath:string, funcs: FileFunctionMap) => {
+/** 生成一个文件的md文档 */
+const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:string) => {
     const mdCreator = new MdCreator();
     // 函数
+    mdCreator.createTitle(1, fileName);
+    mdCreator.createTitle(2, '函数');
+    mdCreator.createText('以下这个文件的工具函数');
     for(const funcName in funcs.value) {
         const func = funcs.value[funcName];
-        mdCreator.createTitle(1, funcName);
-        mdCreator.createUtilsDescription(func.docs?.['@description']?.[0]?.[0] || '');
-        // mdCreator.createParams(func.params, func.docs);
+        mdCreator.createTitle(3, funcName);
+        mdCreator.createText(func.docs?.['@description']?.[0]?.[0]);
+        mdCreator.createParamsTable(func.params, func.docs);
     }
-    console.log(2, filePath, JSON.stringify(mdCreator.content));
+    // type
+    mdCreator.createTitle(2, '类型');
+    mdCreator.createText('以下这个文件搜用到的类型');
+    for(const typeName in funcs.types) {
+        const type = funcs.types[typeName];
+        mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
+        // mdCreator.createUtilsDescription(type.docs?.['@description']?.[0]?.[0]);
+        mdCreator.createTypesTable(type);
+    }
     changeFile(filePath, mdCreator.content);
 };
 
