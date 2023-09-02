@@ -34,7 +34,7 @@ export class MdCreator {
         if(!text) return;
         this.content += text + returnSysbol;
     }
-    // 创建参数表格
+    // 创建文字
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};
         if(docs) {
@@ -47,11 +47,17 @@ export class MdCreator {
             this.content += `无` + returnSysbol;
             return;
         }
-        this.content += '| 参数名 | 说明 | 类型 | 必传 | 默认值 |' + returnSysbol;
-        this.content += '| ------ | ---- | ----| ---- | ------ |' + returnSysbol;
+        const props = [];
         for(const item of params) {
-            this.content += `|${item.name}|${doc[item.name] || ''}|${item.type}|${item.isRequire}|        |` + returnSysbol;
+            props.push({
+                name: item.name,
+                describle: doc[item.name] || '',
+                type: item.type,
+                isRequire: item.isRequire,
+                default: item.isRequire ? '-' : '-'
+            });
         }
+        this.content += `<ParamsTable tableData='${JSON.stringify(props)}'></ParamsTable>` + returnSysbol;
     }
     // 创建类型表格
     createTypesTable(typeInfo: TypeItem) {
@@ -59,12 +65,17 @@ export class MdCreator {
             this.content += `无` + returnSysbol;
             return;
         }
-        this.content += '| 键名 | 说明 | 类型 | 必传 |' + returnSysbol;
-        this.content += '| ------ | ---- | ----| ---- |' + returnSysbol;
+        const props = [];
         if(['interface', 'enum'].includes(typeInfo.type)) {
             for(const item in typeInfo.value as Record<string, string>) {
-                this.content += `|${item}|${ ''}|${typeInfo.value[item]}||` + returnSysbol;
+                props.push({
+                    name: item,
+                    describle: '-',
+                    type: typeInfo.value[item],
+                    isRequire: '-',
+                });
             }
         }
+        this.content += `<TypeTable tableData='${JSON.stringify(props)}'></TypeTable>` + returnSysbol;
     }
 }

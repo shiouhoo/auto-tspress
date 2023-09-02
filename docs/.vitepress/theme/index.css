@@ -1,0 +1,13 @@
+.vp-doc th, .vp-doc td {
+    font-size: 16px;
+    border: unset;
+    padding: unset;
+}
+
+.vp-doc table{
+    display: unset; 
+    border-collapse: unset; 
+    margin: unset; 
+    overflow-x: unset; 
+}
+
