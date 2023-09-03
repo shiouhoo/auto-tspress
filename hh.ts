@@ -1,4 +1,4 @@
-import { fds } from './fds';
+import { ExportedDeclarations } from 'ts-morph';
 interface hh{
     name:string
 }
@@ -17,6 +17,6 @@ enum e1 {
  * @param as 这是参数1
  * @param sdf 这是参数2
  */
-export const test = (as: hh, sdf:Int, s: fds | number, sd:e1) =>{
+export const test = (as: hh, sdf:Int, s: ExportedDeclarations, sd:e1) =>{
 
 };

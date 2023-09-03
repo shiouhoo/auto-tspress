@@ -1,21 +1,5 @@
-import os from 'os';
+import { returnSysbol } from '../global';
 import { Params, TypeItem } from '../types';
-
-// 根据系统返回对应文件系统的换行符
-function getReturnSymbol() {
-    switch (os.platform()) {
-    case 'linux':
-    case 'darwin': return '\n'; // macOS
-    case 'win32': return '\r\n'; // windows
-    case 'aix':
-    case 'freebsd':
-    case 'openbsd':
-    case 'sunos':
-    default: return '\n';
-    }
-}
-
-const returnSysbol = getReturnSymbol();
 
 export class MdCreator {
     content: string;

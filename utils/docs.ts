@@ -127,6 +127,11 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
     mdCreator.createText('以下为函数所用到的类型');
     for(const typeName in funcs.types) {
         const type = funcs.types[typeName];
+        if(!type) {
+            mdCreator.createTitle(3, typeName);
+            mdCreator.createText('未知类型，可能是第三方包提供');
+            continue;
+        }
         mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
         // mdCreator.createUtilsDescription(type.docs?.['@description']?.[0]?.[0]);
         mdCreator.createTypesTable(type);
