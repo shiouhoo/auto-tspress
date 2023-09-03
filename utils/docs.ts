@@ -115,7 +115,7 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
     // 函数
     mdCreator.createTitle(1, fileName);
     mdCreator.createTitle(2, '函数');
-    mdCreator.createText('以下这个文件的工具函数');
+    mdCreator.createText('以下为文件中的工具函数');
     for(const funcName in funcs.value) {
         const func = funcs.value[funcName];
         mdCreator.createTitle(3, funcName);
@@ -124,7 +124,7 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
     }
     // type
     mdCreator.createTitle(2, '类型');
-    mdCreator.createText('以下这个文件搜用到的类型');
+    mdCreator.createText('以下为函数所用到的类型');
     for(const typeName in funcs.types) {
         const type = funcs.types[typeName];
         mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);

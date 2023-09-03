@@ -2,7 +2,6 @@ import { FunctionMap, Params, Returns, CollectMap, TypeItem } from './../types/i
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } from 'ts-morph';
 import { gettypeInfosByExportName } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
-import path from 'path';
 
 let useTypes = new Set<string>();
 
@@ -189,17 +188,15 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
         if(name && Array.from(useTypes).some(element => element.includes(name))) {
             fileImports[name] = {
                 value: 'any',
-                type: 'enum'
+                type: 'any',
             };
-            gettypeInfosByExportName(path.join(sourceFile.getDirectoryPath(), importDeclaration.getModuleSpecifierValue()), name, true);
+            // TODO 获取具体信息
+            gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
         }
         for(const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
             if(Array.from(useTypes).some(element => element.includes(name))) {
-                fileImports[name] = {
-                    value: 'any',
-                    type: 'enum'
-                };
+                fileImports[name] = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
             }
         }
     }

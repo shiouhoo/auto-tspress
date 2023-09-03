@@ -42,7 +42,7 @@ export class MdCreator {
                 doc[item[0]] = item[1];
             }
         }
-        this.content += `### params参数` + returnSysbol;
+        this.content += `#### params参数` + returnSysbol;
         if(!params.length) {
             this.content += `无` + returnSysbol;
             return;
@@ -51,7 +51,7 @@ export class MdCreator {
         for(const item of params) {
             props.push({
                 name: item.name,
-                describle: doc[item.name] || '',
+                describe: doc[item.name] || '-',
                 type: item.type,
                 isRequire: item.isRequire,
                 default: item.isRequire ? '-' : '-'
@@ -70,7 +70,7 @@ export class MdCreator {
             for(const item in typeInfo.value as Record<string, string>) {
                 props.push({
                     name: item,
-                    describle: '-',
+                    describe: '-',
                     type: typeInfo.value[item],
                     isRequire: '-',
                 });
