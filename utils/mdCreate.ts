@@ -45,7 +45,7 @@ export class MdCreator {
     }
     // 创建类型表格
     createTypesTable(typeInfo: TypeItem) {
-        if(!Object.keys(typeInfo.value).length) {
+        if((typeof typeInfo.value == 'string' && !typeInfo.value.length) || !Object.keys(typeInfo.value).length) {
             this.content += `无` + returnSysbol;
             return;
         }
@@ -59,7 +59,9 @@ export class MdCreator {
                     isRequire: '-',
                 });
             }
+            this.content += `<TypeTable tableData='${JSON.stringify(props)}'></TypeTable>` + returnSysbol;
+        }else if(typeInfo.type === 'type') {
+            this.content += `${typeInfo.value}` + returnSysbol;
         }
-        this.content += `<TypeTable tableData='${JSON.stringify(props)}'></TypeTable>` + returnSysbol;
     }
 }

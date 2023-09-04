@@ -20,7 +20,7 @@ export type FunctionMap = Record<string, {
 }> | null
 
 export interface TypeItem {
-    type: 'interface' | 'type' | 'enum' | 'any'
+    type: 'interface' | 'type' | 'enum' | 'any' | '未知'
     value: Record<string, string> | string
 }
 /** 一个函数的收集容器对象 */

@@ -8,17 +8,30 @@ export const isBaseType = (str: string) => {
 };
 /** 通过字符串获取interface */
 export const getInterfaceByText = (exportText: string): Record<string, string>=>{
-    const match = exportText.match(/export\s+interface\s+.+\{([^}]+)\}/);
+    const match = exportText.match(/export +interface +.+\{([^}]+)\}/);
+    if(!match) return null;
     const typeObjectStr = match[1].trim();
     const typeObject = {};
 
     typeObjectStr.split(returnSysbol).forEach(line => {
-        const [key, value] = line.split(':').map(part => part.trim());
+        const [key, value] = line.replace(',', '').split(':').map(part => part.trim());
         typeObject[key] = value;
     });
     return typeObject;
 };
+/** 通过字符串获取enum */
+export const getEnumByText = (exportText: string): Record<string, string>=>{
+    const match = exportText.match(/export +enum +.+\{([^}]+)\}/);
+    if(!match) return null;
+    const typeObjectStr = match[1].trim();
+    const typeObject = {};
 
+    typeObjectStr.split(returnSysbol).forEach(line => {
+        const [key, value] = line.replace(',', '').split('=').map(part => part.trim());
+        typeObject[key] = value;
+    });
+    return typeObject;
+};
 /** 通过文件以及变量名获取导出的类型信息 */
 export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault = false): TypeItem=> {
 
@@ -41,11 +54,25 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
         }
         if (namedExport) {
             const exportText = namedExport.getText();
-            // TODO enum，type
-            if(exportText.includes('interface')) {
+            if(/^export +interface/.test(exportText)) {
                 return {
                     type: 'interface',
-                    value: getInterfaceByText(exportText)
+                    value: getInterfaceByText(exportText) || ''
+                };
+            }else if(/^export +enum/.test(exportText)) {
+                return {
+                    type: 'enum',
+                    value: getEnumByText(exportText) || ''
+                };
+            }if(exportText.includes('type')) {
+                return {
+                    type: 'type',
+                    value: exportText.split('=')[1]?.replace(';', '')?.trim()
+                };
+            }else{
+                return {
+                    type: '未知',
+                    value: '没有解析到类型，可能来源于第三方包'
                 };
             }
         } else {

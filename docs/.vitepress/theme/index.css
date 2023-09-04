@@ -5,7 +5,7 @@
 }
 
 .vp-doc table{
-    display: unset; 
+    display: block; 
     border-collapse: unset; 
     margin: unset; 
     overflow-x: unset; 
