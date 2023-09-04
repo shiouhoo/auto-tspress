@@ -17,9 +17,14 @@ export const getTypeByText = (str: string): string => {
     }else if(str.includes('new')) {
         const match = str.match(/new (.+?)\(/);
         return match[1];
-    }else{
-        return 'string';
+    }else if(str.includes('.')) {
+        if(Number.isNaN(Number(str.split('.')[0]))) {
+            return str.split('.')[0];
+        }else{
+            return 'string';
+        }
     }
+    return 'string';
 };
 /** 对象转字符串 */
 export const objectToString = (obj) => {

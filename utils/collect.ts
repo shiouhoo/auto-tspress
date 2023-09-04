@@ -20,7 +20,9 @@ function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: 
 // 收集jsDoc
 function collectDoc(doc: JSDoc) {
     if(!doc) return null;
-    const docMap:Record<string, string[][]> = {};
+    const docMap:Record<string, string[][]> = {
+        comment: [['', doc.getComment() as string]]
+    };
     for(const jsDocTag of doc.getTags()) {
         const [tagName, ...rest] = jsDocTag.getText().replaceAll('*', '').trim().split(' ');
         if(docMap[tagName]) {

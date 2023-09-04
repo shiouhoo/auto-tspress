@@ -16,11 +16,16 @@ export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<st
         if(type.includes('import')) {
             type = type.replace(/import(.*?)[.]/, '').trim();
         }
+        let defaultValue = '';
+        if(param.getText().includes('=')) {
+            defaultValue = param.getText().split('=')[1];
+        }
         const data = {
             name: param.getName(),
             type,
             isBase: isBaseType(param.getType().getText().trim()),
-            isRequire: param.hasQuestionToken()
+            isRequire: !param.isOptional(),
+            defaultValue: defaultValue || param.getInitializer()?.getText() || '-'
         };
         params.push(data);
         if(!data.isBase) {
@@ -42,16 +47,16 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
         let name = '';
         let type = '';
         let isBase = true;
-        let defaultValue = '';
+        let defaultValue = '-';
         if(p.includes('=')) {
+            isRequire = false;
+            [name, defaultValue] = p.split('=');
+            type = getTypeByText(defaultValue.trim());
+        }else if(p.includes(':')) {
             if(p.includes('?')) {
                 isRequire = false;
                 p = p.replace('?', '');
             }
-            [name, defaultValue] = p.split('=');
-            defaultValue = defaultValue.replaceAll('"', '\'');
-            type = getTypeByText(defaultValue.trim());
-        }else if(p.includes(':')) {
             const [_name, ...rest] = p.split(/[:=]/);
             name = _name;
             type = rest.join('');

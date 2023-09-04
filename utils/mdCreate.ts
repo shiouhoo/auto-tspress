@@ -43,7 +43,7 @@ export class MdCreator {
         const doc = {};
         if(docs) {
             for(const item of docs['@param']) {
-                doc[item[0]] = item[1];
+                doc[item[0]] = item.slice(1, item.length).join('').replace(/[- ]+/g, '');
             }
         }
         this.content += `#### params参数` + returnSysbol;
@@ -59,7 +59,7 @@ export class MdCreator {
                 describe: doc[item.name] || '-',
                 type: item.type,
                 isRequire: item.isRequire,
-                defaultValue: item.isRequire ? item.defaultValue : '-'
+                defaultValue: !item.isRequire ? item.defaultValue : '-'
             });
         }
         this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
