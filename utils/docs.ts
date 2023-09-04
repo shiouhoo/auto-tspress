@@ -136,7 +136,7 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
         // mdCreator.createUtilsDescription(type.docs?.['@description']?.[0]?.[0]);
         mdCreator.createTypesTable(type);
     }
-    changeFile(filePath, mdCreator.content);
+    changeFile(filePath, mdCreator.getContent());
 };
 
 const createMarkdown = (collectMap: CollectMap) => {

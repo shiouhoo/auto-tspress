@@ -1,6 +1,6 @@
 import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params, Returns } from './../types/index';
-import { isBaseType } from './typeAction';
+import { isBaseType, getTypeByText } from './typeAction';
 
 // 判断是否是函数
 export const varibleIsFunction = (variable: VariableStatement) => {
@@ -42,12 +42,15 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
         let name = '';
         let type = '';
         let isBase = true;
+        let defaultValue = '';
         if(p.includes('=')) {
             if(p.includes('?')) {
                 isRequire = false;
                 p = p.replace('?', '');
             }
-            [name, type] = p.split('=');
+            [name, defaultValue] = p.split('=');
+            defaultValue = defaultValue.replaceAll('"', '\'');
+            type = getTypeByText(defaultValue.trim());
         }else if(p.includes(':')) {
             const [_name, ...rest] = p.split(/[:=]/);
             name = _name;
@@ -60,7 +63,8 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
             name: name.trim(),
             type: type.trim(),
             isBase: (isBase = isBaseType(type)),
-            isRequire
+            isRequire,
+            defaultValue
         });
         if(!isBase) {
             useTypes.add(type.trim());

@@ -4,6 +4,7 @@ export type Params = {
     type: string
     isBase: boolean
     isRequire: boolean
+    defaultValue?: string
 }[]
 
 /** 返回值类型 */

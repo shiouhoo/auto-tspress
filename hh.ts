@@ -12,6 +12,6 @@ interface Int{
  * @param as 这是参数1
  * @param sdf 这是参数2
  */
-export const test = (as: hh, sdf:Int, s: e1, sd:fds) =>{
+export const test = (as: hh, sdf:Int, s: e1, sd = new Date('2021-1-1')) =>{
 
 };

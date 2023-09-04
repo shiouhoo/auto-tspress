@@ -1,12 +1,32 @@
 import { returnSysbol } from '../global';
 import { Params, TypeItem } from '../types';
+import { objectToString } from './typeAction';
 
 export class MdCreator {
+    header: string;
     content: string;
+    setup: string;
+    index: number;
     constructor() {
-        this.content = '---' + returnSysbol;
-        this.content += 'outline: deep' + returnSysbol;
-        this.content += '---' + returnSysbol;
+        this.header = '---' + returnSysbol;
+        this.header += 'outline: deep' + returnSysbol;
+        this.header += '---' + returnSysbol;
+        this.content = '';
+        this.setup = '';
+        this.index = 1;
+    }
+    getContent() {
+        let str = this.header;
+        if(this.setup) {
+            str += `<script setup>` + returnSysbol;
+            str += this.setup;
+            str += `</script>` + returnSysbol;
+        }
+        str += this.content;
+        return str;
+    }
+    createSetup(str: string) {
+        this.setup += str + returnSysbol;
     }
     // 创建标题
     createTitle(level:1|2|3|4|5|6, title:string) {
@@ -18,7 +38,7 @@ export class MdCreator {
         if(!text) return;
         this.content += text + returnSysbol;
     }
-    // 创建文字
+    // 创建参数表格
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};
         if(docs) {
@@ -31,6 +51,7 @@ export class MdCreator {
             this.content += `无` + returnSysbol;
             return;
         }
+
         const props = [];
         for(const item of params) {
             props.push({
@@ -38,10 +59,12 @@ export class MdCreator {
                 describe: doc[item.name] || '-',
                 type: item.type,
                 isRequire: item.isRequire,
-                default: item.isRequire ? '-' : '-'
+                defaultValue: item.isRequire ? item.defaultValue : '-'
             });
         }
-        this.content += `<ParamsTable tableData='${JSON.stringify(props)}'></ParamsTable>` + returnSysbol;
+        this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
+        this.content += `<ParamsTable :tableData='tableData${this.index}'></ParamsTable>` + returnSysbol;
+        this.index++;
     }
     // 创建类型表格
     createTypesTable(typeInfo: TypeItem) {
@@ -59,7 +82,9 @@ export class MdCreator {
                     isRequire: '-',
                 });
             }
-            this.content += `<TypeTable tableData='${JSON.stringify(props)}'></TypeTable>` + returnSysbol;
+            this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
+            this.content += `<TypeTable :tableData='tableData${this.index}'></TypeTable>` + returnSysbol;
+            this.index++;
         }else if(typeInfo.type === 'type') {
             this.content += `${typeInfo.value}` + returnSysbol;
         }

@@ -6,6 +6,48 @@ import { returnSysbol } from '../global';
 export const isBaseType = (str: string) => {
     return /^(?:string|number|boolean|undefined|null|symbol)\w?\[\]$/.test(str);
 };
+/** 通过字符串获取类型 */
+export const getTypeByText = (str: string): string => {
+    if(!Number.isNaN(Number(str))) {
+        return 'number';
+    }else if(str === 'true' || str === 'false') {
+        return 'boolean';
+    }else if(['null', 'undefined'].includes(str)) {
+        return str;
+    }else if(str.includes('new')) {
+        const match = str.match(/new (.+?)\(/);
+        return match[1];
+    }else{
+        return 'string';
+    }
+};
+/** 对象转字符串 */
+export const objectToString = (obj) => {
+    if (Array.isArray(obj)) {
+        // 如果是数组，递归处理数组元素
+        const elements = obj.map(element => objectToString(element));
+        return `[${elements.join(',')}]`;
+    } else if (typeof obj === 'object') {
+        if (obj instanceof Date) {
+            // 如果是 Date 对象，返回日期的字符串表示
+            return obj.toISOString();
+        } else {
+        // 如果是对象，则递归处理其属性
+            const keys = Object.keys(obj);
+            const pairs = [];
+
+            for (const key of keys) {
+                const value = objectToString(obj[key]);
+                pairs.push(`${key}:${value}`);
+            }
+
+            return `{${pairs.join(',')}}`;
+        }
+    } else {
+        // 如果是基本数据类型或函数，则使用字符串化的值
+        return JSON.stringify(obj);
+    }
+};
 /** 通过字符串获取interface */
 export const getInterfaceByText = (exportText: string): Record<string, string>=>{
     const match = exportText.match(/export +interface +.+\{([^}]+)\}/);
