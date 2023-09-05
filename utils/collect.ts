@@ -21,7 +21,7 @@ function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: 
 function collectDoc(doc: JSDoc) {
     if(!doc) return null;
     const docMap:Record<string, string[][]> = {
-        comment: [[doc.getComment() as string]]
+        comment: [[doc.getComment() as string || '']]
     };
     for(const jsDocTag of doc.getTags()) {
         const [tagName, ...rest] = jsDocTag.getText().replaceAll('*', '').trim().split(' ');
@@ -32,6 +32,9 @@ function collectDoc(doc: JSDoc) {
         }
     }
     return Object.keys(docMap).length ? docMap : null;
+}
+// 设置类型doc
+function setTypeDoc(object: any, type:string, map:any) {
 }
 
 // 处理箭头函数
@@ -105,17 +108,7 @@ const collectInterfaceType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
         for (const property of properties) {
             typeObject[property.getName()] = property.getType().getText();
         }
-        if(inter.isExported()) {
-            globalInterfaces[interName] = {
-                value: typeObject,
-                type: 'interface'
-            };
-        }else{
-            fileInterfaces[interName] = {
-                value: typeObject,
-                type: 'interface'
-            };
-        }
+
     }
     return { fileInterfaces, globalInterfaces };
 };
@@ -135,12 +128,14 @@ const collectNameType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
         if(typeAliay.isExported()) {
             globalTypes[name] = {
                 value: type,
-                type: 'type'
+                type: 'type',
+                docs: collectDoc(typeAliay.getJsDocs()[0])
             };
         }else{
             fileTypes[name] = {
                 value: type,
-                type: 'type'
+                type: 'type',
+                docs: collectDoc(typeAliay.getJsDocs()[0])
             };
         }
     }
@@ -167,12 +162,14 @@ const collectEnumType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
         if(en.isExported()) {
             globalEnums[name] = {
                 value: typeObject,
-                type: 'enum'
+                type: 'enum',
+                docs: collectDoc(en.getJsDocs()[0])
             };
         }else{
             fileEnums[name] = {
                 value: typeObject,
-                type: 'enum'
+                type: 'enum',
+                docs: collectDoc(en.getJsDocs()[0])
             };
         }
     }
@@ -191,6 +188,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
             fileImports[name] = {
                 value: 'any',
                 type: 'any',
+                docs: null
             };
             // TODO 获取具体信息
             gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
@@ -214,14 +212,14 @@ const collectTypes = (sourceFile: SourceFile, useTypes: Set<string>): {
     const { globalEnums, fileEnums } = collectEnumType(sourceFile, useTypes);
     const fileImports = collectImportTypes(sourceFile, useTypes);
     const fileType = {
-        ...fileInterfaces,
         ...fileTypes,
+        ...fileInterfaces,
         ...fileEnums,
         ...fileImports
     };
     const globalType = {
-        ...globalInterfaces,
         ...globalTypes,
+        ...globalInterfaces,
         ...globalEnums
     };
     return {
