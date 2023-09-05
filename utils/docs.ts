@@ -119,7 +119,7 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
     for(const funcName in funcs.value) {
         const func = funcs.value[funcName];
         mdCreator.createTitle(3, funcName);
-        mdCreator.createText(func.docs?.['@description']?.[0]?.[0]);
+        mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
         mdCreator.createParamsTable(func.params, func.docs);
     }
     // type

@@ -83,7 +83,7 @@ export class MdCreator {
                 });
             }
             this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
-            this.content += `<TypeTable :tableData='tableData${this.index}'></TypeTable>` + returnSysbol;
+            this.content += `<TypeTable :tableData='tableData${this.index}' type='${typeInfo.type}'></TypeTable>` + returnSysbol;
             this.index++;
         }else if(typeInfo.type === 'type') {
             this.content += `${typeInfo.value}` + returnSysbol;
