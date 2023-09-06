@@ -33,9 +33,6 @@ function collectDoc(doc: JSDoc) {
     }
     return Object.keys(docMap).length ? docMap : null;
 }
-// 设置类型doc
-function setTypeDoc(object: any, type:string, map:any) {
-}
 
 // 处理箭头函数
 function collectVaribleFunc(variable: VariableStatement) {
@@ -90,140 +87,102 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): FunctionMap 
     }
     return functionDeclarationMap;
 }
-
-// 搜集文件中的interface
-const collectInterfaceType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
-    // 保存接口对应的属性列表
-    const fileInterfaces:Record<string, TypeItem> = {};
-    const globalInterfaces:Record<string, TypeItem> = {};
-
-    const interfaces = sourceFile.getInterfaces();
-    for(const inter of interfaces) {
-        const interName = inter.getName();
-        if(!inter.isExported() && !Array.from(useTypes).some(element => element.includes(interName))) continue;
-        // 保存属性列表
-        const typeObject:Record<string, string> = {};
-        // 获取接口的属性列表
-        const properties = inter.getProperties();
-        for (const property of properties) {
-            typeObject[property.getName()] = property.getType().getText();
-        }
-
-    }
-    return { fileInterfaces, globalInterfaces };
-};
-
-// 搜集type关键字定义的类型
-const collectNameType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
-
-    // 保存接口对应的属性列表
-    const fileTypes:Record<string, TypeItem> = {};
-    const globalTypes:Record<string, TypeItem> = {};
-
-    const typeAliases = sourceFile.getTypeAliases();
-    for(const typeAliay of typeAliases) {
-        const name = typeAliay.getName();
-        const type = typeAliay.getText().split('=')[1];
-        if(!typeAliay.isExported() && !Array.from(useTypes).some(element => element.includes(name))) continue;
-        if(typeAliay.isExported()) {
-            globalTypes[name] = {
-                value: type,
-                type: 'type',
-                docs: collectDoc(typeAliay.getJsDocs()[0])
-            };
-        }else{
-            fileTypes[name] = {
-                value: type,
-                type: 'type',
-                docs: collectDoc(typeAliay.getJsDocs()[0])
-            };
-        }
-    }
-    return { globalTypes, fileTypes };
-};
-
-// 收集文件中的枚举
-const collectEnumType = (sourceFile: SourceFile, useTypes: Set<string>)=>{
-
-    // 保存对应的属性列表
-    const fileEnums:Record<string, TypeItem> = {};
-    const globalEnums:Record<string, TypeItem> = {};
-
-    const enums = sourceFile.getEnums();
-    for(const en of enums) {
-        const name = en.getName();
-        // 保存属性列表
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const typeObject:Record<string, any> = {};
-        for(const item of en.getMembers()) {
-            typeObject[item.getName()] = item.getValue();
-        }
-        if(!en.isExported() && !Array.from(useTypes).some(element => element.includes(name))) continue;
-        if(en.isExported()) {
-            globalEnums[name] = {
-                value: typeObject,
-                type: 'enum',
-                docs: collectDoc(en.getJsDocs()[0])
-            };
-        }else{
-            fileEnums[name] = {
-                value: typeObject,
-                type: 'enum',
-                docs: collectDoc(en.getJsDocs()[0])
-            };
-        }
-    }
-    return { fileEnums, globalEnums };
-};
 // 收集import导入的类型
 const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
 
     // 保存对应的属性列表
     const fileImports:Record<string, TypeItem> = {};
+    // 获取默认导出
+    const defaultExport = sourceFile.getDefaultExportSymbol();
 
-    const importDeclarations = sourceFile.getImportDeclarations();
-    for(const importDeclaration of importDeclarations) {
-        const name = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
-        if(name && Array.from(useTypes).some(element => element.includes(name))) {
+    if(defaultExport) {
+        const name = defaultExport.getEscapedName();
+        if(Array.from(useTypes).some(element => element.includes(name))) {
             fileImports[name] = {
                 value: 'any',
                 type: 'any',
                 docs: null
             };
             // TODO 获取具体信息
-            gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
+            gettypeInfosByExportName(sourceFile, name, true);
         }
-        for(const specifier of importDeclaration.getNamedImports()) {
-            const name = specifier.getName();
-            if(Array.from(useTypes).some(element => element.includes(name))) {
-                fileImports[name] = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
+    }
+
+    // 获取具名导出
+    const exportSymbols = sourceFile.getExportSymbols();
+    for(const exportSymbol of exportSymbols) {
+        const name = exportSymbol.getEscapedName();
+        if(Array.from(useTypes).some(element => element.includes(name))) {
+            fileImports[name] = gettypeInfosByExportName(sourceFile, name, false);
+        }
+    }
+
+    return Object.keys(fileImports).length ? fileImports : null;
+};
+// 收集文件中的interface，type，enum
+const collectTypeInFile = (sourceFile: SourceFile, useTypes: Set<string>)=>{
+    const globalTypes: Record<string, TypeItem> = {};
+    const fileTypes: Record<string, TypeItem> = {};
+    for(const type of ['type', 'interface', 'enum']) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let objects:any;
+        if(type === 'interface') {
+            objects = sourceFile.getInterfaces();
+        }else if(type === 'type') {
+            objects = sourceFile.getTypeAliases();
+        }else if(type === 'enum') {
+            objects = sourceFile.getEnums();
+        }
+        for(const object of objects) {
+            const name = object.getName();
+            if(!object.isExported() && !Array.from(useTypes).some(element => element.includes(name))) break;
+            // 保存属性列表
+            let typeObject:Record<string, string>|string = {};
+            if(type === 'interface') {
+            // 获取接口的属性列表
+                const properties = object.getProperties();
+                for (const property of properties) {
+                    typeObject[property.getName()] = property.getType().getText();
+                }
+            }else if(type === 'type') {
+                typeObject = object.getText().split('=')[1];
+            }else if(type === 'enum') {
+                for(const item of object.getMembers()) {
+                    typeObject[item.getName()] = item.getValue();
+                }
+            }
+            const tmp:TypeItem = {
+                value: typeObject,
+                type: type === 'interface' ? 'interface' : type === 'type' ? 'type' : 'enum',
+                docs: collectDoc(object.getJsDocs()[0])
+            };
+            if(object.isExported()) {
+                globalTypes[name] = tmp;
+            }else{
+                fileTypes[name] = tmp;
             }
         }
     }
-    return Object.keys(fileImports).length ? fileImports : null;
+    return {
+        globalTypes,
+        fileTypes
+    };
+
 };
+
 // 收集文件中的类型
 const collectTypes = (sourceFile: SourceFile, useTypes: Set<string>): {
     globalType: Record<string, TypeItem>,
     fileType: Record<string, TypeItem>
 }=>{
-    const { fileInterfaces, globalInterfaces } = collectInterfaceType(sourceFile, useTypes);
-    const { globalTypes, fileTypes } = collectNameType(sourceFile, useTypes);
-    const { globalEnums, fileEnums } = collectEnumType(sourceFile, useTypes);
+    const { fileTypes, globalTypes } = collectTypeInFile(sourceFile, useTypes);
     const fileImports = collectImportTypes(sourceFile, useTypes);
     const fileType = {
         ...fileTypes,
-        ...fileInterfaces,
-        ...fileEnums,
         ...fileImports
     };
-    const globalType = {
-        ...globalTypes,
-        ...globalInterfaces,
-        ...globalEnums
-    };
     return {
-        globalType: Object.keys(globalType).length ? globalType : null,
+        globalType: Object.keys(globalTypes).length ? globalTypes : null,
         fileType: Object.keys(fileType).length ? fileType : null,
     };
 };

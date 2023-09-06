@@ -133,7 +133,7 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
             continue;
         }
         mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
-        // mdCreator.createUtilsDescription(type.docs?.['@description']?.[0]?.[0]);
+        mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
         mdCreator.createTypesTable(type);
     }
     changeFile(filePath, mdCreator.getContent());

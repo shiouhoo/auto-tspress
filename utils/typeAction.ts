@@ -104,22 +104,26 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
             if(/^export +interface/.test(exportText)) {
                 return {
                     type: 'interface',
-                    value: getInterfaceByText(exportText) || ''
+                    value: getInterfaceByText(exportText) || '',
+                    docs: null
                 };
             }else if(/^export +enum/.test(exportText)) {
                 return {
                     type: 'enum',
-                    value: getEnumByText(exportText) || ''
+                    value: getEnumByText(exportText) || '',
+                    docs: null
                 };
             }if(exportText.includes('type')) {
                 return {
                     type: 'type',
-                    value: exportText.split('=')[1]?.replace(';', '')?.trim()
+                    value: exportText.split('=')[1]?.replace(';', '')?.trim(),
+                    docs: null
                 };
             }else{
                 return {
                     type: '未知',
-                    value: '没有解析到类型，可能来源于第三方包'
+                    value: '没有解析到类型，可能来源于第三方包',
+                    docs: null
                 };
             }
         } else {
