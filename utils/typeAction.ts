@@ -1,6 +1,6 @@
 import { SourceFile, ExportedDeclarations } from 'ts-morph';
 import { TypeItem } from '../types';
-import { returnSysbol } from '../global';
+import { lineSysbol } from '../global';
 
 // 判断字符串是否为基本类型
 export const isBaseType = (str: string) => {
@@ -60,7 +60,7 @@ export const getInterfaceByText = (exportText: string): Record<string, string>=>
     const typeObjectStr = match[1].trim();
     const typeObject = {};
 
-    typeObjectStr.split(returnSysbol).forEach(line => {
+    typeObjectStr.split(lineSysbol).forEach(line => {
         const [key, value] = line.replace(',', '').split(':').map(part => part.trim());
         typeObject[key] = value;
     });
@@ -73,7 +73,7 @@ export const getEnumByText = (exportText: string): Record<string, string>=>{
     const typeObjectStr = match[1].trim();
     const typeObject = {};
 
-    typeObjectStr.split(returnSysbol).forEach(line => {
+    typeObjectStr.split(lineSysbol).forEach(line => {
         const [key, value] = line.replace(',', '').split('=').map(part => part.trim());
         typeObject[key] = value;
     });

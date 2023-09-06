@@ -22,4 +22,4 @@ function getReturnSymbol() {
     }
 }
 
-export const returnSysbol = getReturnSymbol();
+export const lineSysbol = getReturnSymbol();

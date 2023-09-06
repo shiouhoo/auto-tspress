@@ -1,4 +1,4 @@
-import { returnSysbol } from '../global';
+import { lineSysbol } from '../global';
 import { Params, TypeItem } from '../types';
 import { objectToString } from './typeAction';
 
@@ -8,9 +8,9 @@ export class MdCreator {
     setup: string;
     index: number;
     constructor() {
-        this.header = '---' + returnSysbol;
-        this.header += 'outline: deep' + returnSysbol;
-        this.header += '---' + returnSysbol;
+        this.header = '---' + lineSysbol;
+        this.header += 'outline: deep' + lineSysbol;
+        this.header += '---' + lineSysbol;
         this.content = '';
         this.setup = '';
         this.index = 1;
@@ -18,25 +18,25 @@ export class MdCreator {
     getContent() {
         let str = this.header;
         if(this.setup) {
-            str += `<script setup>` + returnSysbol;
+            str += `<script setup>` + lineSysbol;
             str += this.setup;
-            str += `</script>` + returnSysbol;
+            str += `</script>` + lineSysbol;
         }
         str += this.content;
         return str;
     }
     createSetup(str: string) {
-        this.setup += str + returnSysbol;
+        this.setup += str + lineSysbol;
     }
     // 创建标题
     createTitle(level:1|2|3|4|5|6, title:string) {
         if(!title) return;
-        this.content += '#'.repeat(level) + ' ' + title + returnSysbol;
+        this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
     // 创建函数说明
     createText(text: string) {
         if(!text) return;
-        this.content += text + returnSysbol;
+        this.content += text + '<br />' + lineSysbol;
     }
     // 创建参数表格
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
@@ -46,9 +46,9 @@ export class MdCreator {
                 doc[item[0]] = item.slice(1, item.length).join('').replace(/[- ]+/g, '');
             }
         }
-        this.content += `#### params参数` + returnSysbol;
+        this.content += `#### params参数` + lineSysbol;
         if(!params.length) {
-            this.content += `无` + returnSysbol;
+            this.content += `无` + lineSysbol;
             return;
         }
 
@@ -63,13 +63,13 @@ export class MdCreator {
             });
         }
         this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
-        this.content += `<ParamsTable :tableData='tableData${this.index}'></ParamsTable>` + returnSysbol;
+        this.content += `<ParamsTable :tableData='tableData${this.index}'></ParamsTable>` + lineSysbol;
         this.index++;
     }
     // 创建类型表格
     createTypesTable(typeInfo: TypeItem) {
         if((typeof typeInfo.value == 'string' && !typeInfo.value.length) || !Object.keys(typeInfo.value).length) {
-            this.content += `无` + returnSysbol;
+            this.content += `无` + lineSysbol;
             return;
         }
         const props = [];
@@ -83,10 +83,10 @@ export class MdCreator {
                 });
             }
             this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
-            this.content += `<TypeTable :tableData='tableData${this.index}' type='${typeInfo.type}'></TypeTable>` + returnSysbol;
+            this.content += `<TypeTable :tableData='tableData${this.index}' type='${typeInfo.type}'></TypeTable>` + lineSysbol;
             this.index++;
         }else if(typeInfo.type === 'type') {
-            this.content += `${typeInfo.value}` + returnSysbol;
+            this.content += `- 类型：\`${typeInfo.value}\`` + lineSysbol;
         }
     }
 }
