@@ -1,5 +1,5 @@
 import { lineSysbol } from '../global';
-import { Params, TypeItem } from '../types';
+import { Params, TypeItem, TypeValue } from '../types';
 import { objectToString } from './typeAction';
 
 export class MdCreator {
@@ -74,11 +74,11 @@ export class MdCreator {
         }
         const props = [];
         if(['interface', 'enum'].includes(typeInfo.type)) {
-            for(const item in typeInfo.value as Record<string, string>) {
+            for(const item in typeInfo.value as TypeValue) {
                 props.push({
                     name: item,
-                    describe: '-',
-                    type: typeInfo.value[item],
+                    describe: typeInfo.value[item].doc?.['comment']?.[0]?.[0] || '-',
+                    type: typeInfo.value[item].value,
                     isRequire: '-',
                 });
             }

@@ -1,4 +1,4 @@
-import { FunctionMap, Params, Returns, CollectMap, TypeItem } from './../types/index';
+import { FunctionMap, Params, Returns, CollectMap, TypeItem, TypeValue } from './../types/index';
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } from 'ts-morph';
 import { gettypeInfosByExportName } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
@@ -18,7 +18,7 @@ function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, params: 
     return functionDeclarationMap;
 }
 // 收集jsDoc
-function collectDoc(doc: JSDoc) {
+export function collectDoc(doc: JSDoc) {
     if(!doc) return null;
     const docMap:Record<string, string[][]> = {
         comment: [[doc.getComment() as string || '']]
@@ -92,28 +92,26 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: Set<string>)=>{
 
     // 保存对应的属性列表
     const fileImports:Record<string, TypeItem> = {};
-    // 获取默认导出
-    const defaultExport = sourceFile.getDefaultExportSymbol();
 
-    if(defaultExport) {
-        const name = defaultExport.getEscapedName();
-        if(Array.from(useTypes).some(element => element.includes(name))) {
+    const importDeclarations = sourceFile.getImportDeclarations();
+    for(const importDeclaration of importDeclarations) {
+        const name = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
+        // 默认导入
+        if(name && Array.from(useTypes).some(element => element.includes(name))) {
             fileImports[name] = {
                 value: 'any',
                 type: 'any',
-                docs: null
+                docs: null,
             };
             // TODO 获取具体信息
-            gettypeInfosByExportName(sourceFile, name, true);
+            gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
         }
-    }
-
-    // 获取具名导出
-    const exportSymbols = sourceFile.getExportSymbols();
-    for(const exportSymbol of exportSymbols) {
-        const name = exportSymbol.getEscapedName();
-        if(Array.from(useTypes).some(element => element.includes(name))) {
-            fileImports[name] = gettypeInfosByExportName(sourceFile, name, false);
+        // 具名导入
+        for(const specifier of importDeclaration.getNamedImports()) {
+            const name = specifier.getName();
+            if(Array.from(useTypes).some(element => element.includes(name))) {
+                fileImports[name] = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
+            }
         }
     }
 
@@ -137,18 +135,24 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: Set<string>)=>{
             const name = object.getName();
             if(!object.isExported() && !Array.from(useTypes).some(element => element.includes(name))) break;
             // 保存属性列表
-            let typeObject:Record<string, string>|string = {};
+            let typeObject: TypeValue = {};
             if(type === 'interface') {
             // 获取接口的属性列表
                 const properties = object.getProperties();
                 for (const property of properties) {
-                    typeObject[property.getName()] = property.getType().getText();
+                    typeObject[property.getName()] = {
+                        value: property.getType().getText(),
+                        doc: collectDoc(property.getJsDocs()[0])
+                    };
                 }
             }else if(type === 'type') {
                 typeObject = object.getText().split('=')[1];
             }else if(type === 'enum') {
                 for(const item of object.getMembers()) {
-                    typeObject[item.getName()] = item.getValue();
+                    typeObject[item.getName()] = {
+                        value: item.getValue(),
+                        doc: collectDoc(item.getJsDocs()[0])
+                    };
                 }
             }
             const tmp:TypeItem = {

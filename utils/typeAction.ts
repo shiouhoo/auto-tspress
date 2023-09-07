@@ -1,6 +1,6 @@
-import { SourceFile, ExportedDeclarations } from 'ts-morph';
-import { TypeItem } from '../types';
-import { lineSysbol } from '../global';
+import { SourceFile, InterfaceDeclaration, EnumDeclaration } from 'ts-morph';
+import { TypeItem, TypeValue } from '../types';
+import { collectDoc } from './collect';
 
 // 判断字符串是否为基本类型
 export const isBaseType = (str: string) => {
@@ -53,31 +53,25 @@ export const objectToString = (obj) => {
         return JSON.stringify(obj);
     }
 };
-/** 通过字符串获取interface */
-export const getInterfaceByText = (exportText: string): Record<string, string>=>{
-    const match = exportText.match(/export +interface +.+\{([^}]+)\}/);
-    if(!match) return null;
-    const typeObjectStr = match[1].trim();
-    const typeObject = {};
 
-    typeObjectStr.split(lineSysbol).forEach(line => {
-        const [key, value] = line.replace(',', '').split(':').map(part => part.trim());
-        typeObject[key] = value;
-    });
-    return typeObject;
-};
-/** 通过字符串获取enum */
-export const getEnumByText = (exportText: string): Record<string, string>=>{
-    const match = exportText.match(/export +enum +.+\{([^}]+)\}/);
-    if(!match) return null;
-    const typeObjectStr = match[1].trim();
-    const typeObject = {};
-
-    typeObjectStr.split(lineSysbol).forEach(line => {
-        const [key, value] = line.replace(',', '').split('=').map(part => part.trim());
-        typeObject[key] = value;
-    });
-    return typeObject;
+/** 将interface，enum的信息转为对象 */
+const getDetailTypeToObject = (namedExport, type:string)=>{
+    const members = namedExport.getMembers();
+    const typeObject: TypeValue = {};
+    for (const member of members) {
+        if(type === 'interface') {
+            typeObject[member.getName()] = {
+                value: member.getTypeNode()?.getText(),
+                doc: collectDoc(member.getJsDocs()[0])
+            };
+        }else if(type === 'enum') {
+            typeObject[member.getName()] = {
+                value: member.getValue(),
+                doc: collectDoc(member.getJsDocs()[0])
+            };
+        }
+    }
+    return Object.keys(typeObject).length ? typeObject : null;
 };
 /** 通过文件以及变量名获取导出的类型信息 */
 export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault = false): TypeItem=> {
@@ -91,8 +85,8 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
 
     }else{
         const exportedDeclarations = sourceFile.getExportedDeclarations();
-        // 查找具名导出并获取名称
-        let namedExport: ExportedDeclarations = null;
+        // 查找具名导出并获取名称,ExportedDeclarations
+        let namedExport = null;
         for (const [exportName, declarations] of exportedDeclarations.entries()) {
             if (exportName === name) {
                 // 遍历具名导出的声明并获取其名称
@@ -101,23 +95,23 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
         }
         if (namedExport) {
             const exportText = namedExport.getText();
-            if(/^export +interface/.test(exportText)) {
+            if(namedExport instanceof InterfaceDeclaration) {
                 return {
                     type: 'interface',
-                    value: getInterfaceByText(exportText) || '',
-                    docs: null
+                    value: getDetailTypeToObject(namedExport, 'interface') || '',
+                    docs: collectDoc(namedExport.getJsDocs()[0])
                 };
-            }else if(/^export +enum/.test(exportText)) {
+            }else if(namedExport instanceof EnumDeclaration) {
                 return {
                     type: 'enum',
-                    value: getEnumByText(exportText) || '',
-                    docs: null
+                    value: getDetailTypeToObject(namedExport, 'enum') || '',
+                    docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }if(exportText.includes('type')) {
                 return {
                     type: 'type',
                     value: exportText.split('=')[1]?.replace(';', '')?.trim(),
-                    docs: null
+                    docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else{
                 return {

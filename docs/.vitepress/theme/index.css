@@ -11,3 +11,6 @@
     overflow-x: unset; 
 }
 
+.el-table .cell{
+    word-break: break-word;
+}

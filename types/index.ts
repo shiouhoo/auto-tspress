@@ -20,9 +20,16 @@ export type FunctionMap = Record<string, {
     docs: Record<string, string[][]>
 }> | null
 
+export interface TypeValue {
+    [key: string]: {
+        value: string,
+        doc: Record<string, string[][]>
+    }
+}
+
 export interface TypeItem {
     type: 'interface' | 'type' | 'enum' | 'any' | '未知'
-    value: Record<string, string> | string,
+    value: TypeValue | string,
     docs: Record<string, string[][]>
 }
 /** 一个函数的收集容器对象 */
