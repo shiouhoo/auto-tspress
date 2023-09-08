@@ -14,3 +14,8 @@
 .el-table .cell{
     word-break: break-word;
 }
+
+.vp-doc h3{
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--vp-c-divider);
+}

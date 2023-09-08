@@ -49,3 +49,8 @@ export interface CollectMap {
     interfaces: any,
     globalTypes: Record<string, Record<string, TypeItem>>
 }
+/** 用于收集函数中用到的类型 */
+export interface UseTypes{
+    util: Set<string>,
+    hooks: Set<string>,
+}

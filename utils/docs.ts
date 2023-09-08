@@ -78,7 +78,7 @@ const createSidebar = (collectMap: CollectMap) => {
         const filePath = path.join(cliPath, `/docs/${item}.js`);
         const data = {
             item: [],
-            link: `/${item}/`
+            link: `/${item}/${Object.keys(collectMap[item] || {})[0]?.split('.')?.[0] || ''}`
         };
             // key 为文件名
         for(const key in collectMap[item] || {}) {
@@ -89,11 +89,10 @@ const createSidebar = (collectMap: CollectMap) => {
             });
             if(!startPath) {
                 startPath = `/${item}/${fileName}`;
-                data.link = `/${item}/${fileName}`;
             }
             // 生成对应的md文件
-            if(item === 'utils') {
-                createContentUtils(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key], key);
+            if(item === 'utils' || item === 'hooks') {
+                createContentUtils(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key], key, item === 'hooks');
             }
         }
         // 这一项没有任何文档
@@ -110,12 +109,12 @@ const createSidebar = (collectMap: CollectMap) => {
 };
 
 /** 生成一个文件的md文档 */
-const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:string) => {
+const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:string, isHooks:boolean) => {
     const mdCreator = new MdCreator();
     // 函数
     mdCreator.createTitle(1, fileName);
-    mdCreator.createTitle(2, '函数');
-    mdCreator.createText('以下为文件中的工具函数');
+    mdCreator.createTitle(2, isHooks ? 'hooks' : '函数');
+    // mdCreator.createText(`以下为文件中的${isHooks ? 'hooks' : '工具函数'}`);
     for(const funcName in funcs.value) {
         const func = funcs.value[funcName];
         mdCreator.createTitle(3, funcName);
@@ -123,12 +122,13 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
         mdCreator.createParamsTable(func.params, func.docs);
         // 返回值
         mdCreator.createTitle(4, '返回值');
-        mdCreator.createText(func.returns?.type || 'void');
+        mdCreator.createText('- 返回类型: ' + (func.returns?.type || 'void'));
+        mdCreator.createText('- 描述: ' + (func.docs?.['@returns']?.[0]?.[0] || '暂无'));
     }
     // type
     if(funcs.types) {
         mdCreator.createTitle(2, '类型');
-        mdCreator.createText('以下为函数所用到的类型');
+        // mdCreator.createText(`以下为${isHooks ? 'hooks' : '函数'}所用到的类型`);
         for(const typeName in funcs.types) {
             const type = funcs.types[typeName];
             if(!type) {
