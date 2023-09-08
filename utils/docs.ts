@@ -121,20 +121,26 @@ const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:st
         mdCreator.createTitle(3, funcName);
         mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
         mdCreator.createParamsTable(func.params, func.docs);
+        // 返回值
+        mdCreator.createTitle(4, '返回值');
+        mdCreator.createText(func.returns?.type || 'void');
     }
     // type
-    mdCreator.createTitle(2, '类型');
-    mdCreator.createText('以下为函数所用到的类型');
-    for(const typeName in funcs.types) {
-        const type = funcs.types[typeName];
-        if(!type) {
-            mdCreator.createTitle(3, typeName);
-            mdCreator.createText('未知类型，可能是第三方包提供');
-            continue;
+    if(funcs.types) {
+        mdCreator.createTitle(2, '类型');
+        mdCreator.createText('以下为函数所用到的类型');
+        for(const typeName in funcs.types) {
+            const type = funcs.types[typeName];
+            if(!type) {
+                mdCreator.createTitle(3, typeName);
+                mdCreator.createText('未知类型，可能是第三方包提供');
+                continue;
+            }
+            mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
+            mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
+            mdCreator.createTypesTable(type);
         }
-        mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
-        mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
-        mdCreator.createTypesTable(type);
+
     }
     changeFile(filePath, mdCreator.getContent());
 };

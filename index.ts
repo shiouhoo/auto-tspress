@@ -12,7 +12,7 @@ const init = () => {
                 console.log('文件路径为空');
                 return;
             }
-            console.log('开始构建');
+            console.log('开始构建', dirMap.dir);
             const collectMap: CollectMap = collect(dirMap.dir);
 
             console.log('数据收集成功，开始生成文档', JSON.stringify(collectMap));

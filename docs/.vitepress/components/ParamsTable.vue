@@ -1,5 +1,5 @@
 <template>
-    <el-table :data="props.tableData" stripe style="width: 100%;margin-top: 20px;">
+    <el-table :data="props.tableData" stripe style="width: 100%;margin: 20px 0;">
         <el-table-column prop="name" label="参数名" fixed="left" width="100"/>
         <el-table-column prop="type" label="类型" />
         <el-table-column prop="describe" label="说明"  :width="describeWidth"/>
@@ -30,7 +30,7 @@ const props = defineProps({
 const describeWidth = computed(()=>{
     return !!props.tableData.some((item)=>{
         return item.describe.length > 20;
-    }) ? 300: 150;
+    }) ? 250: 150;
 })
 
 const defaultWidth = computed(()=>{

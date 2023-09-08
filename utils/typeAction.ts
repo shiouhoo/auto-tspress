@@ -32,7 +32,7 @@ export const objectToString = (obj) => {
         // 如果是数组，递归处理数组元素
         const elements = obj.map(element => objectToString(element));
         return `[${elements.join(',')}]`;
-    } else if (typeof obj === 'object') {
+    } else if (typeof obj === 'object' && obj) {
         if (obj instanceof Date) {
             // 如果是 Date 对象，返回日期的字符串表示
             return obj.toISOString();

@@ -42,7 +42,7 @@ export class MdCreator {
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};
         if(docs) {
-            for(const item of docs['@param']) {
+            for(const item of docs['@param'] || []) {
                 doc[item[0]] = item.slice(1, item.length).join('').replace(/[- ]+/g, '');
             }
         }
