@@ -28,7 +28,7 @@ export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<st
             defaultValue: defaultValue || param.getInitializer()?.getText() || '-'
         };
         params.push(data);
-        if(!data.isBase) {
+        if(!data.isBase && data.type) {
             useTypes.add(data.type);
         }
     }
@@ -39,7 +39,29 @@ export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<st
 export const getParamsListByVarible = (declaration: VariableStatement, useTypes: Set<string>) => {
     const params: Params = [];
     const headerText: string = declaration.getText().split('\n')[0];
-    const paramsList: string[] = headerText.match(/\((.*)\)/)[1].split(',');
+    const paramsList: string[] = [];
+    const paramString = headerText.match(/\((.*)\)/)[1];
+    let currentArg = '';
+    let bracketLevel = 0;
+
+    for (let i = 0;i < paramString.length;i++) {
+        const char = paramString[i];
+
+        if (char === ',' && bracketLevel === 0) {
+            paramsList.push(currentArg.trim());
+            currentArg = '';
+        } else {
+            currentArg += char;
+
+            if (char === '<') {
+                bracketLevel++;
+            } else if (char === '>') {
+                bracketLevel--;
+            }
+        }
+    }
+
+    paramsList.push(currentArg.trim());
     for(let p of paramsList) {
         if(!p) continue;
 
@@ -65,13 +87,13 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
             type = null;
         }
         params.push({
-            name: name.trim(),
-            type: type.trim(),
+            name: name && name.trim(),
+            type: type && type.trim(),
             isBase: (isBase = isBaseType(type)),
             isRequire,
             defaultValue
         });
-        if(!isBase) {
+        if(!isBase && type) {
             useTypes.add(type.trim());
         }
 
@@ -87,7 +109,7 @@ export const getReturns = (declaration: FunctionDeclaration, { typeChecker }, us
     if(returnTypeNode) {
         const returnType = typeChecker.getTypeAtLocation(returnTypeNode);
         type = returnType.getText();
-        if(!isBaseType(type)) {
+        if(!isBaseType(type) && type) {
             useTypes.add(type.trim());
             isBase = false;
         }
@@ -104,7 +126,7 @@ export const getReturnsByVarible = (declaration: VariableStatement, useTypes: Se
     const match = headerText.match(/\)\s?:(.*?)[{=>]/);
     if(!match) return null;
     let isBase = true;
-    const type = match[1].trim();
+    const type = match[1]?.trim();
     if(!isBaseType(type)) {
         useTypes.add(type);
         isBase = false;
