@@ -1,10 +1,7 @@
-import { isSameFilePath } from './../global';
-import { FunctionDeclaration, VariableStatement, SourceFile } from 'ts-morph';
+import { lineSysbol } from './../global';
+import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params, Returns } from './../types/index';
 import { isBaseType, getTypeByText } from './typeAction';
-
-/** 用于记录默认导入对应的类型 */
-const pathTypeMap: Record<string, string> = {};
 
 // 判断是否是函数
 export const varibleIsFunction = (variable: VariableStatement) => {
@@ -13,53 +10,14 @@ export const varibleIsFunction = (variable: VariableStatement) => {
 };
 
 // 获取function参数列表
-export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>, { sourceFile }:{sourceFile:SourceFile}) => {
-    const params: Params = [];
-    for (const param of declaration.getParameters()) {
-        let type = param.getType().getText();
-        // 默认导入，格式为 import("C:/Users/29729/XX").XX
-        if(type.includes('import')) {
-            const filePath = type.split('").')[0].replace(/import\("/, '').trim();
-            if(pathTypeMap[filePath]) {
-                type = pathTypeMap[filePath];
-            }else{
-                // 类型为导入的名称
-                const importDeclarations = sourceFile.getImportDeclarations();
-                for (const importDeclaration of importDeclarations) {
-                /** 默认导入的名称 */
-                    const importPath = importDeclaration.getModuleSpecifierValue();
-                    if(isSameFilePath(filePath, importPath)) {
-                        type = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
-                        pathTypeMap[filePath] = type;
-                        break;
-                    }
-                }
-
-            }
-        }
-        let defaultValue = '';
-        if(param.getText().includes('=')) {
-            defaultValue = param.getText().split('=')[1];
-        }
-        const data = {
-            name: param.getName(),
-            type,
-            isBase: isBaseType(param.getType().getText().trim()),
-            isRequire: !param.isOptional(),
-            defaultValue: defaultValue || param.getInitializer()?.getText() || '-'
-        };
-        params.push(data);
-        if(!data.isBase && data.type) {
-            useTypes.add(data.type);
-        }
-    }
-    return params;
+export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>) => {
+    return getParamsListByVarible(declaration, useTypes);
 };
 
 // 获取箭头函数参数列表
-export const getParamsListByVarible = (declaration: VariableStatement, useTypes: Set<string>) => {
+export const getParamsListByVarible = (declaration: VariableStatement | FunctionDeclaration, useTypes: Set<string>) => {
     const params: Params = [];
-    const headerText: string = declaration.getText().split('\n')[0];
+    const headerText: string = declaration.getText().split(lineSysbol)[0];
     const paramsList: string[] = [];
     const paramString = headerText.match(/\((.*)\)/)[1];
     let currentArg = '';
@@ -83,6 +41,8 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
     }
 
     paramsList.push(currentArg.trim());
+    /** 记录是否import * as */
+    let isAsImport = false;
     for(let p of paramsList) {
         if(!p) continue;
 
@@ -94,7 +54,7 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
         if(p.includes('=')) {
             isRequire = false;
             [name, defaultValue] = p.split('=');
-            type = getTypeByText(defaultValue.trim());
+            type = getTypeByText(defaultValue.trim(), true);
         }else if(p.includes(':')) {
             if(p.includes('?')) {
                 isRequire = false;
@@ -102,6 +62,7 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
             }
             const [_name, ...rest] = p.split(/[:=]/);
             name = _name;
+            if(rest.join('').includes('.')) isAsImport = true;
             type = rest.join('');
         }else{
             name = p;
@@ -109,7 +70,8 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
         }
         params.push({
             name: name && name.trim(),
-            type: type && type.trim(),
+            // 处理 import * as
+            type: type && (isAsImport ? getTypeByText(type, false) : type).trim(),
             isBase: (isBase = isBaseType(type)),
             isRequire,
             defaultValue
@@ -143,7 +105,7 @@ export const getReturns = (declaration: FunctionDeclaration, { typeChecker }, us
 
 // 获取箭头函数返回值
 export const getReturnsByVarible = (declaration: VariableStatement, useTypes: Set<string>): Returns => {
-    const headerText: string = declaration.getText().split('\n')[0];
+    const headerText: string = declaration.getText().split(lineSysbol)[0];
     const match = headerText.match(/\)\s?:(.*?)[{=>]/);
     if(!match) return null;
     let isBase = true;

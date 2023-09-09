@@ -121,9 +121,11 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
             const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
             if (useTypes.hooks.has(name)) {
                 fileImportsHooks[name] = t;
+                // useTypes.hooks.delete(name);
             }
             if (useTypes.util.has(name)) {
                 fileImportsUtil[name] = t;
+                // useTypes.util.delete(name);
             }
         }
         // 具名导入
@@ -133,9 +135,29 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
                 if (useTypes.hooks.has(name)) {
                     fileImportsHooks[name] = t;
+                    // useTypes.hooks.delete(name);
                 }
                 if (useTypes.util.has(name)) {
                     fileImportsUtil[name] = t;
+                    // useTypes.util.delete(name);
+                }
+            }
+        }
+        // import * as 方式
+        const importText = importDeclaration.getImportClause().getText();
+        if(importText.includes('* as')) {
+            // 获取别名的名称
+            const aliasName = importText.match(/^\*\s+as\s+(\w+)/)[1];
+            for(const item of [...useTypes.hooks, ...useTypes.util]) {
+                if(!item.includes(`${aliasName}.`)) continue;
+                const typeName = item.split('.')[1];
+                const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), typeName, false);
+                if (useTypes.hooks.has(item)) {
+                    fileImportsHooks[typeName] = t;
+                }
+                if (useTypes.util.has(item)) {
+                    fileImportsUtil[typeName] = t;
+                    console.log(2, t);
                 }
             }
         }

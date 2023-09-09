@@ -7,24 +7,20 @@ export const isBaseType = (str: string) => {
     return /^(?:string|number|boolean|undefined|null|symbol)\w?\[\]$/.test(str);
 };
 /** 通过字符串获取类型 */
-export const getTypeByText = (str: string): string => {
+export const getTypeByText = (str: string, isDefault): string => {
     if(!Number.isNaN(Number(str))) {
         return 'number';
     }else if(str === 'true' || str === 'false') {
         return 'boolean';
-    }else if(['null', 'undefined'].includes(str)) {
-        return str;
     }else if(str.includes('new')) {
         const match = str.match(/new (.+?)\(/);
         return match[1];
     }else if(str.includes('.')) {
-        if(Number.isNaN(Number(str.split('.')[0]))) {
-            return str.split('.')[0];
-        }else{
-            return 'string';
+        if(Number.isNaN(Number(str.split('.')[isDefault ? 0 : 1]))) {
+            return str.split('.')[isDefault ? 0 : 1];
         }
     }
-    return 'string';
+    return str;
 };
 /** 对象转字符串 */
 export const objectToString = (obj) => {
