@@ -1,6 +1,10 @@
-import { FunctionDeclaration, VariableStatement } from 'ts-morph';
+import { isSameFilePath } from './../global';
+import { FunctionDeclaration, VariableStatement, SourceFile } from 'ts-morph';
 import { Params, Returns } from './../types/index';
 import { isBaseType, getTypeByText } from './typeAction';
+
+/** 用于记录默认导入对应的类型 */
+const pathTypeMap: Record<string, string> = {};
 
 // 判断是否是函数
 export const varibleIsFunction = (variable: VariableStatement) => {
@@ -9,12 +13,29 @@ export const varibleIsFunction = (variable: VariableStatement) => {
 };
 
 // 获取function参数列表
-export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>) => {
+export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>, { sourceFile }:{sourceFile:SourceFile}) => {
     const params: Params = [];
     for (const param of declaration.getParameters()) {
         let type = param.getType().getText();
+        // 默认导入，格式为 import("C:/Users/29729/XX").XX
         if(type.includes('import')) {
-            type = type.replace(/import(.*?)[.]/, '').trim();
+            const filePath = type.split('").')[0].replace(/import\("/, '').trim();
+            if(pathTypeMap[filePath]) {
+                type = pathTypeMap[filePath];
+            }else{
+                // 类型为导入的名称
+                const importDeclarations = sourceFile.getImportDeclarations();
+                for (const importDeclaration of importDeclarations) {
+                /** 默认导入的名称 */
+                    const importPath = importDeclaration.getModuleSpecifierValue();
+                    if(isSameFilePath(filePath, importPath)) {
+                        type = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
+                        pathTypeMap[filePath] = type;
+                        break;
+                    }
+                }
+
+            }
         }
         let defaultValue = '';
         if(param.getText().includes('=')) {

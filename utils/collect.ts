@@ -2,6 +2,7 @@ import { FunctionMap, Params, Returns, CollectMap, TypeItem, TypeValue, UseTypes
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } from 'ts-morph';
 import { gettypeInfosByExportName } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
+import fs from 'fs';
 
 let useTypes: UseTypes;
 // 更新一个函数声明
@@ -62,11 +63,13 @@ function collectVaribleFunc(variable: VariableStatement, ishooks: boolean) {
     };
 }
 // 处理function关键字定义的函数
-function collectFunctionDeclaration(variable: FunctionDeclaration, ishooks: boolean, { typeChecker }) {
+function collectFunctionDeclaration(variable: FunctionDeclaration, ishooks: boolean, { typeChecker, sourceFile }) {
     if (!variable.isExported()) return {};
 
     // 获取参数和返回值
-    const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util);
+    const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util, {
+        sourceFile
+    });
     const returns: Returns = getReturns(variable, { typeChecker }, ishooks ? useTypes.hooks : useTypes.util);
 
     return {
@@ -95,7 +98,7 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
     for (const functionDeclaration of functions) {
         const funcName = functionDeclaration.getName();
         // 获取参数和返回值
-        const { params, returns } = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker });
+        const { params, returns } = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker, sourceFile });
         if (!params && !returns) continue;
         const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
         [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, funcName);
@@ -111,27 +114,28 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
 
     const importDeclarations = sourceFile.getImportDeclarations();
     for (const importDeclaration of importDeclarations) {
+        /** 默认导入的名称 */
         const name = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
         // 默认导入
-        // TODO useType判断错误
-        if (name && Array.from(useTypes.util).some(element => element.includes(name))) {
-            // fileImports[name] = {
-            //     value: 'any',
-            //     type: 'any',
-            //     docs: null,
-            // };
-            // TODO 获取具体信息
-            gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
+        if (name && [...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
+            const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
+            if (useTypes.hooks.has(name)) {
+                fileImportsHooks[name] = t;
+            }
+            if (useTypes.util.has(name)) {
+                fileImportsUtil[name] = t;
+            }
         }
         // 具名导入
         for (const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
             if ([...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) {
+                const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
                 if (useTypes.hooks.has(name)) {
-                    fileImportsHooks[name] = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
-                }else{
-                    fileImportsUtil[name] = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
-
+                    fileImportsHooks[name] = t;
+                }
+                if (useTypes.util.has(name)) {
+                    fileImportsUtil[name] = t;
                 }
             }
         }
@@ -191,7 +195,8 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             } else {
                 if (useTypes.hooks.has(name)) {
                     fileHooksTypes[name] = tmp;
-                } else {
+                }
+                if (useTypes.util.has(name)) {
                     fileUtilTypes[name] = tmp;
                 }
             }
@@ -249,6 +254,9 @@ export function collect(paths) {
 
     // 添加要分析的文件
     for (const path of paths.split(' ')) {
+        if(!path.includes('*') && !fs.existsSync(path)) {
+            throw new Error(`不存在的文件：${path}`);
+        }
         project.addSourceFilesAtPaths(path);
     }
     const sourceFiles = project.getSourceFiles();

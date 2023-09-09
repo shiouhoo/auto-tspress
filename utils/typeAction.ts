@@ -77,12 +77,15 @@ const getDetailTypeToObject = (namedExport, type:string)=>{
 export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault = false): TypeItem=> {
 
     if(isDefault) {
+        // 找到默认导出的类型名，然后使用调用自身找出类型信息
         const defaultExport = sourceFile.getDefaultExportSymbol();
-
         if (!defaultExport) {
             throw new Error(`${sourceFile.getFilePath()}没有默认导出`);
         }
-
+        // 格式为 import("C:/Users/29729/XX").XX
+        const defaultExportType = defaultExport.getDeclaredType().getText();
+        const realName = defaultExportType.replace(/import(.*?)[.]/, '').trim();
+        return gettypeInfosByExportName(sourceFile, realName, false);
     }else{
         const exportedDeclarations = sourceFile.getExportedDeclarations();
         // 查找具名导出并获取名称,ExportedDeclarations

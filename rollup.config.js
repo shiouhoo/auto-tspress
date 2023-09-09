@@ -16,7 +16,6 @@ export default {
     output: {
         file: path.resolve(__dirnameNew, 'lib/index.js'),
         sourcemap: false,
-
     },
     plugins: [ // 这个插件是有执行顺序的
         ts({ tsconfig: './tsconfig.json', tsconfigOverride: override }),

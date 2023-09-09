@@ -1,8 +1,10 @@
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 import os from 'os';
-
+// 脚手架路径
 export const cliPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../');
+// 项目路径
+export const projectPath = process.cwd();
 
 const __filenameNew = fileURLToPath(import.meta.url);
 
@@ -23,3 +25,10 @@ function getReturnSymbol() {
 }
 
 export const lineSysbol = getReturnSymbol();
+/** 判断路径是否相等，file1：完整路径，file2：相对路径 */
+export const isSameFilePath = (file1: string, file2: string) => {
+    if(!file2.includes('@')) {
+        // 判断是否指向同一个文件
+        return path.join(file1).toString() === path.join(projectPath, file2).toString();
+    }
+};
