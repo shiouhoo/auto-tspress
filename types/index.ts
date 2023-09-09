@@ -1,5 +1,7 @@
 /** 参数类型 */
 export type Params = {
+    /** name */
+    // TODO 对象解析
     name: string
     type: string
     isBase: boolean
@@ -18,8 +20,9 @@ export type FunctionMap = Record<string, {
     params: Params
     returns: Returns
     docs: Record<string, string[][]>
-}> | null
+}>
 
+/** TypeItem中的value项 */
 export interface TypeValue {
     [key: string]: {
         value: string,
@@ -30,6 +33,8 @@ export interface TypeValue {
 export interface TypeItem {
     type: 'interface' | 'type' | 'enum' | 'any' | '未知'
     value: TypeValue | string,
+    /** 针对interface和type */
+    jsType?: 'object' | 'array' | 'string'
     docs: Record<string, string[][]>
 }
 /** 一个函数的收集容器对象 */
@@ -46,7 +51,6 @@ export interface CollectMap {
      */
     hooks: Record<string, FileFunctionMap>,
     utils: Record<string, FileFunctionMap>,
-    interfaces: any,
     globalTypes: Record<string, Record<string, TypeItem>>
 }
 /** 用于收集函数中用到的类型 */

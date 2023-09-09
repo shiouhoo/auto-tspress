@@ -1,6 +1,7 @@
 import { SourceFile, InterfaceDeclaration, EnumDeclaration } from 'ts-morph';
 import { TypeItem, TypeValue } from '../types';
 import { collectDoc } from './collect';
+import { lineSysbol } from '../global';
 
 // 判断字符串是否为基本类型
 export const isBaseType = (str: string) => {
@@ -51,7 +52,7 @@ export const objectToString = (obj) => {
 };
 
 /** 将interface，enum的信息转为对象 */
-const getDetailTypeToObject = (namedExport, type:string)=>{
+const getDetailByExport = (namedExport, type:string)=>{
     const members = namedExport.getMembers();
     const typeObject: TypeValue = {};
     for (const member of members) {
@@ -68,6 +69,38 @@ const getDetailTypeToObject = (namedExport, type:string)=>{
         }
     }
     return Object.keys(typeObject).length ? typeObject : null;
+};
+/** 将type的信息转为对象 */
+export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|'object'|'string']=>{
+    let jsType;
+    if(str.match(/\{([^{}]+)\}\[\]/)) {
+        jsType = 'array';
+    }else if(str.match(/\{([^{}]+)\}/)) {
+        jsType = 'object';
+    }else{
+        return [str, 'string'];
+    }
+
+    const typeObject: TypeValue = {};
+    const keyValuePairs = str.match(/(\/\*\*([\s\S]*?)\*\/|\/\/(.*?))?\s*(\w+):\s*([^\n]+)\s*/g);
+    for(const pair of keyValuePairs) {
+        let [comment, keyValue] = [null, null];
+        if(pair.includes('/**') || pair.includes('//')) {
+            [comment, keyValue] = pair.split(lineSysbol);
+        }else{
+            keyValue = pair;
+        }
+        const [key, value] = keyValue.split(':').map(str => str.trim());
+        typeObject[key] = {
+            value: value,
+            doc: comment && {
+                comment: [[comment.replaceAll('*', '').replaceAll('/', '').trim() || '']]
+            }
+        };
+    }
+
+    return [typeObject, jsType];
+
 };
 /** 通过文件以及变量名获取导出的类型信息 */
 export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault = false): TypeItem=> {
@@ -97,13 +130,13 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
             if(namedExport instanceof InterfaceDeclaration) {
                 return {
                     type: 'interface',
-                    value: getDetailTypeToObject(namedExport, 'interface') || '',
+                    value: getDetailByExport(namedExport, 'interface') || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else if(namedExport instanceof EnumDeclaration) {
                 return {
                     type: 'enum',
-                    value: getDetailTypeToObject(namedExport, 'enum') || '',
+                    value: getDetailByExport(namedExport, 'enum') || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }if(exportText.includes('type')) {

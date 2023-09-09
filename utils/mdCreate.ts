@@ -73,7 +73,8 @@ export class MdCreator {
             return;
         }
         const props = [];
-        if(['interface', 'enum'].includes(typeInfo.type)) {
+        const typeShouldTable = typeInfo.type === 'type' && ['object', 'array'].includes(typeInfo.jsType);
+        if(['interface', 'enum'].includes(typeInfo.type) || typeShouldTable) {
             for(const item in typeInfo.value as TypeValue) {
                 props.push({
                     name: item,
@@ -83,6 +84,7 @@ export class MdCreator {
                 });
             }
             this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
+            this.content += `- 类型: ${typeInfo.jsType === 'object' ? '`对象`，属性如下：' : '`数组`，每项属性如下'}` + lineSysbol;
             this.content += `<TypeTable :tableData='tableData${this.index}' type='${typeInfo.type}'></TypeTable>` + lineSysbol;
             this.index++;
         }else if(typeInfo.type === 'type') {

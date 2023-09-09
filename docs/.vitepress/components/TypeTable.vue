@@ -25,7 +25,7 @@ const props = defineProps({
 const typeWidth = computed(()=>{
     return !!props.tableData.some((item)=>{
         return item.type.length > 20;
-    }) ? 300: 100;
+    }) ? 300: '';
 })
 
 const getLabel = computed(()=>{
@@ -33,6 +33,8 @@ const getLabel = computed(()=>{
         return '类型';
     }else if(props.type === 'enum'){
         return '值'
+    }else if(props.type === 'type'){
+        return '类型'
     }
     return '';
 })

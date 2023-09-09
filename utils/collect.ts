@@ -1,6 +1,6 @@
 import { FunctionMap, Params, Returns, CollectMap, TypeItem, TypeValue, UseTypes } from './../types/index';
-import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile } from 'ts-morph';
-import { gettypeInfosByExportName } from './typeAction';
+import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile, EnumDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph';
+import { gettypeInfosByExportName, getDetailTypeByString } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
 import fs from 'fs';
 
@@ -63,13 +63,11 @@ function collectVaribleFunc(variable: VariableStatement, ishooks: boolean) {
     };
 }
 // 处理function关键字定义的函数
-function collectFunctionDeclaration(variable: FunctionDeclaration, ishooks: boolean, { typeChecker, sourceFile }) {
+function collectFunctionDeclaration(variable: FunctionDeclaration, ishooks: boolean, { typeChecker }) {
     if (!variable.isExported()) return {};
 
     // 获取参数和返回值
-    const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util, {
-        sourceFile
-    });
+    const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util);
     const returns: Returns = getReturns(variable, { typeChecker }, ishooks ? useTypes.hooks : useTypes.util);
 
     return {
@@ -98,7 +96,7 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
     for (const functionDeclaration of functions) {
         const funcName = functionDeclaration.getName();
         // 获取参数和返回值
-        const { params, returns } = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker, sourceFile });
+        const { params, returns } = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker });
         if (!params && !returns) continue;
         const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
         [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, funcName);
@@ -157,7 +155,6 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 }
                 if (useTypes.util.has(item)) {
                     fileImportsUtil[typeName] = t;
-                    console.log(2, t);
                 }
             }
         }
@@ -174,8 +171,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
     const fileHooksTypes: Record<string, TypeItem> = {};
     const fileUtilTypes: Record<string, TypeItem> = {};
     for (const type of ['type', 'interface', 'enum']) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let objects: any;
+        let objects: InterfaceDeclaration[] | TypeAliasDeclaration[] | EnumDeclaration[];
         if (type === 'interface') {
             objects = sourceFile.getInterfaces();
         } else if (type === 'type') {
@@ -184,13 +180,14 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             objects = sourceFile.getEnums();
         }
         for (const object of objects) {
+            let jsType: 'object' | 'array' | 'string' = 'object';
             const name: string = object.getName();
             if (!object.isExported() && ![...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) break;
             // 保存属性列表
-            let typeObject: TypeValue = {};
+            let typeObject: TypeValue | string = {};
             if (type === 'interface') {
                 // 获取接口的属性列表
-                const properties = object.getProperties();
+                const properties = (<InterfaceDeclaration>object).getProperties();
                 for (const property of properties) {
                     typeObject[property.getName()] = {
                         value: property.getType().getText(),
@@ -198,11 +195,11 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                     };
                 }
             } else if (type === 'type') {
-                typeObject = object.getText().split('=')[1];
+                [typeObject, jsType] = getDetailTypeByString(object.getText().split('=')[1]);
             } else if (type === 'enum') {
-                for (const item of object.getMembers()) {
+                for (const item of (<EnumDeclaration>object).getMembers()) {
                     typeObject[item.getName()] = {
-                        value: item.getValue(),
+                        value: item.getValue() + '',
                         doc: collectDoc(item.getJsDocs()[0])
                     };
                 }
@@ -210,6 +207,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             const tmp: TypeItem = {
                 value: typeObject,
                 type: type === 'interface' ? 'interface' : type === 'type' ? 'type' : 'enum',
+                jsType,
                 docs: collectDoc(object.getJsDocs()[0])
             };
             if (object.isExported()) {
@@ -224,6 +222,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             }
         }
     }
+
     return {
         globalTypes,
         fileHooksTypes,
@@ -261,12 +260,9 @@ export function collect(paths) {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
     const collectMap: CollectMap = {
-        hooks: {
-        },
-        utils: {
-        },
-        interfaces: {},
-        globalTypes: null
+        hooks: {},
+        utils: {},
+        globalTypes: {}
     };
 
     // 创建一个项目实例
@@ -291,17 +287,23 @@ export function collect(paths) {
         };
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { typeChecker });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
-        collectMap.hooks[sourceFile.getBaseName()] = {
-            value: hooksDeclarationMap,
-            types: Object.keys(fileType.hooks).length ? fileType.hooks : null
-        };
-        collectMap.utils[sourceFile.getBaseName()] = {
-            value: functionDeclarationMap,
-            types: Object.keys(fileType.util).length ? fileType.util : null
-        };
-        collectMap.globalTypes = {
-            [sourceFile.getBaseName()]: globalType
-        };
+
+        if(hooksDeclarationMap) {
+            collectMap.hooks[sourceFile.getBaseName()] = {
+                value: hooksDeclarationMap,
+                types: Object.keys(fileType.hooks).length ? fileType.hooks : null
+            };
+        }
+
+        if(functionDeclarationMap) {
+            collectMap.utils[sourceFile.getBaseName()] = {
+                value: functionDeclarationMap,
+                types: Object.keys(fileType.util).length ? fileType.util : null
+            };
+        }
+        if(globalType) {
+            collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
+        }
         console.log(useTypes);
     }
     return collectMap;

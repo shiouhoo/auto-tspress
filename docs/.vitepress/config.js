@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import hookConfig from '../hooks.js'
 import utilsConfig from '../utils.js'
-import interfacesConfig from '../interfaces.js'
+import interfacesConfig from '../globalTypes.js'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -21,9 +21,9 @@ export default defineConfig({
         activeMatch: '/utils/'
       },
       {
-        text: '接口',
+        text: '全局类型',
         link: interfacesConfig.link,
-        activeMatch: '/interfaces/'
+        activeMatch: '/globalTypes/'
       }
     ],
 
@@ -40,7 +40,7 @@ export default defineConfig({
           items: utilsConfig.item 
         }
       ],
-      '/interfaces/': [
+      '/globalTypes/': [
         {
           text: '接口定义',
           items: interfacesConfig.item 
