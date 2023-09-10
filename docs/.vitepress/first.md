@@ -3,7 +3,7 @@
 layout: home
 
 hero:
-  name: "quick-docs"
+  name: "auto-tspress"
   text: "hooks文档"
   tagline: 点击开始查看你的文档
   actions:

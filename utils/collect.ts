@@ -107,7 +107,6 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
     if (defaultExport) {
         const defaultDeclaraation:any = defaultExport.getDeclarations()[0];
         const ishooks = sourceFile.getBaseName().startsWith('use');
-        console.log(1, sourceFile.getBaseName(), 'getJsDocs' in defaultDeclaraation);
         if (varibleIsFunction(defaultDeclaraation.getText())) {
             // 获取参数和返回值
             const params: Params = getParamsListByVarible(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
