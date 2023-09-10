@@ -33,8 +33,8 @@ export interface TypeValue {
 export interface TypeItem {
     type: 'interface' | 'type' | 'enum' | 'any' | '未知'
     value: TypeValue | string,
-    /** 针对interface和type */
-    jsType?: 'object' | 'array' | 'string'
+    /** 针对type */
+    targetType?: 'object' | 'array' | 'string' | 'Record'
     docs: Record<string, string[][]>
 }
 /** 一个函数的收集容器对象 */

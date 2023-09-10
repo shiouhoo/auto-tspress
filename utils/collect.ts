@@ -180,7 +180,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             objects = sourceFile.getEnums();
         }
         for (const object of objects) {
-            let jsType: 'object' | 'array' | 'string' = 'object';
+            let targetType: 'object' | 'array' | 'string' = 'object';
             const name: string = object.getName();
             if (!object.isExported() && ![...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) break;
             // 保存属性列表
@@ -195,7 +195,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                     };
                 }
             } else if (type === 'type') {
-                [typeObject, jsType] = getDetailTypeByString(object.getText().split('=')[1]);
+                [typeObject, targetType] = getDetailTypeByString(object.getText().split('=')[1]);
             } else if (type === 'enum') {
                 for (const item of (<EnumDeclaration>object).getMembers()) {
                     typeObject[item.getName()] = {
@@ -207,7 +207,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             const tmp: TypeItem = {
                 value: typeObject,
                 type: type === 'interface' ? 'interface' : type === 'type' ? 'type' : 'enum',
-                jsType,
+                targetType,
                 docs: collectDoc(object.getJsDocs()[0])
             };
             if (object.isExported()) {

@@ -72,16 +72,26 @@ const getDetailByExport = (namedExport, type:string)=>{
 };
 /** 将type的信息转为对象 */
 export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|'object'|'string']=>{
-    let jsType;
-    if(str.match(/\{([^{}]+)\}\[\]/)) {
-        jsType = 'array';
+    let targetType;
+    const typeObject: TypeValue = {};
+    if((str = str.trim()).startsWith('Record')) {
+        targetType = 'Record';
+        const match = str.match(/^Record<\s*([^,]+)\s*,\s*([\s\S]+)>/)?.map(str => str.trim());
+        if(match) {
+            typeObject[match[1]] = {
+                value: match[2],
+                doc: null
+            };
+        }
+        return [typeObject, targetType];
+    }else if(str.match(/\{([^{}]+)\}\[\]/)) {
+        targetType = 'array';
     }else if(str.match(/\{([^{}]+)\}/)) {
-        jsType = 'object';
+        targetType = 'object';
     }else{
         return [str, 'string'];
     }
 
-    const typeObject: TypeValue = {};
     const keyValuePairs = str.match(/(\/\*\*([\s\S]*?)\*\/|\/\/(.*?))?\s*(\w+):\s*([^\n]+)\s*/g);
     for(const pair of keyValuePairs) {
         let [comment, keyValue] = [null, null];
@@ -90,7 +100,7 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
         }else{
             keyValue = pair;
         }
-        const [key, value] = keyValue.split(':').map(str => str.trim());
+        const [key, value] = keyValue.split(':').map(str => str.replaceAll(',', '').trim());
         typeObject[key] = {
             value: value,
             doc: comment && {
@@ -99,7 +109,7 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
         };
     }
 
-    return [typeObject, jsType];
+    return [typeObject, targetType];
 
 };
 /** 通过文件以及变量名获取导出的类型信息 */

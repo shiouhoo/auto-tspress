@@ -106,7 +106,7 @@ const createSidebar = (collectMap: CollectMap) => {
 
 };
 
-/** 生成一个文件util的md文档 */
+/** 生成一个文件的md文档 */
 const createContent = (filePath:string, funcs: FileFunctionMap, fileName:string, itemType:'utils'|'hooks'|'globalTypes', globalTypeMap: Record<string, TypeItem>) => {
     const mdCreator = new MdCreator();
     if(itemType === 'utils' || itemType === 'hooks') {
@@ -127,9 +127,9 @@ const createContent = (filePath:string, funcs: FileFunctionMap, fileName:string,
     }
     // type
     const funcTypeShow = ['utils', 'hooks'].includes(itemType) && funcs.types;
-    if(funcTypeShow || (itemType === 'globalTypes' && globalTypeMap)) {
-        funcTypeShow && mdCreator.createTitle(2, '类型');
-        // mdCreator.createText(`以下为${isHooks ? 'hooks' : '函数'}所用到的类型`);
+    funcTypeShow && mdCreator.createTitle(2, '类型');
+    const globalTypeTableShow = itemType === 'globalTypes' && globalTypeMap;
+    if(funcTypeShow || globalTypeTableShow) {
         const map = funcTypeShow ? funcs.types : globalTypeMap;
         for(const typeName in map) {
             const type = map[typeName];
@@ -140,7 +140,13 @@ const createContent = (filePath:string, funcs: FileFunctionMap, fileName:string,
             }
             mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
             mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
-            mdCreator.createTypesTable(type);
+            if(type.targetType === 'Record') {
+                const key = Object.keys(type.value)[0];
+                mdCreator.createText(`- 类型: Record`);
+                mdCreator.createTsCode(`Record<${key},${(<string>type.value[key].value)}>`);
+            }else{
+                mdCreator.createTypesTable(type);
+            }
         }
 
     }

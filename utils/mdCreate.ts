@@ -38,6 +38,12 @@ export class MdCreator {
         if(!text) return;
         this.content += text + '<br />' + lineSysbol;
     }
+    // 创建ts代码块
+    createTsCode(code: string) {
+        this.content += '```ts' + lineSysbol;
+        this.content += code + lineSysbol;
+        this.content += '```' + lineSysbol;
+    }
     // 创建参数表格
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};
@@ -73,7 +79,7 @@ export class MdCreator {
             return;
         }
         const props = [];
-        const typeShouldTable = typeInfo.type === 'type' && ['object', 'array'].includes(typeInfo.jsType);
+        const typeShouldTable = typeInfo.type === 'type' && ['object', 'array'].includes(typeInfo.targetType);
         if(['interface', 'enum'].includes(typeInfo.type) || typeShouldTable) {
             for(const item in typeInfo.value as TypeValue) {
                 props.push({
@@ -84,7 +90,25 @@ export class MdCreator {
                 });
             }
             this.createSetup(`const tableData${this.index}=${objectToString(props)}`);
-            this.content += `- 类型: ${typeInfo.jsType === 'object' ? '`对象`，属性如下：' : '`数组`，每项属性如下'}` + lineSysbol;
+
+            // type详情说明
+            if(typeInfo.type === 'type') {
+                let typeText:string;
+                switch(typeInfo.targetType) {
+                case 'object':
+                    typeText = '`对象`，属性如下：';
+                    break;
+                case 'array':
+                    typeText = '`数组`，每项属性如下：';
+                    break;
+                case 'string':
+                    typeText = '`string`，属性如下：';
+                    break;
+                default:
+                    typeText = '其他';
+                }
+                this.content += `- 类型: ${typeText}` + lineSysbol;
+            }
             this.content += `<TypeTable :tableData='tableData${this.index}' type='${typeInfo.type}'></TypeTable>` + lineSysbol;
             this.index++;
         }else if(typeInfo.type === 'type') {

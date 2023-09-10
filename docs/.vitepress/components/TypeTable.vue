@@ -1,5 +1,5 @@
 <template>
-    <el-table :data="props.tableData" stripe style="width: 100%;margin-top: 20px;">
+    <el-table :data="props.tableData" stripe border style="width: 100%;margin-top: 20px;">
         <el-table-column prop="name" label="键名" fixed="left" width="100" />
         <el-table-column prop="type" :label="getLabel" :width="typeWidth"/>
         <el-table-column prop="describe" label="说明" />
