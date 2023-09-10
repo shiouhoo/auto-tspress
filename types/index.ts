@@ -24,6 +24,12 @@ export type FunctionMap = Record<string, {
 
 /** TypeItem中的value项 */
 export interface TypeValue {
+    /**
+     * 属性名：{
+     *    value: 属性值,
+     *    doc: 注释
+     * }
+     */
     [key: string]: {
         value: string,
         doc: Record<string, string[][]>

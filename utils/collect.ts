@@ -194,6 +194,14 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                         doc: collectDoc(property.getJsDocs()[0])
                     };
                 }
+                // 获取索引签名
+                const indexSignature = (<InterfaceDeclaration>object).getIndexSignatures()[0];
+                if(indexSignature) {
+                    typeObject[`[${indexSignature.getKeyName()} as ${indexSignature.getType().getText()}]`] = {
+                        value: indexSignature.getReturnType().getText(),
+                        doc: collectDoc(indexSignature.getJsDocs()[0])
+                    };
+                }
             } else if (type === 'type') {
                 [typeObject, targetType] = getDetailTypeByString(object.getText().split('=')[1]);
             } else if (type === 'enum') {
