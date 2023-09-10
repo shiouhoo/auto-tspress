@@ -1,6 +1,6 @@
 {
-  "name": "tspress",
-  "version": "0.0.1",
+  "name": "auto-tspress",
+  "version": "0.0.8",
   "description": "通过tsdoc快速生成项目中工具函数的文档",
   "type": "module",
   "scripts": {
@@ -13,7 +13,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "bin": {
-    "tspress": "./lib/index1.js"
+    "auto-tspress": "./lib/index.js"
   },
   "author": "shiouhoo",
   "license": "MIT",
@@ -31,10 +31,10 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "commander": "^11.0.0",
     "element-plus": "^2.3.12",
     "ts-morph": "^19.0.0",
-    "vitepress": "1.0.0-rc.9",
-    "commander": "^11.0.0"
+    "vitepress": "1.0.0-rc.9"
   },
   "files": [
     "docs",
