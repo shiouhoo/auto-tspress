@@ -1,25 +1,29 @@
-import fds from './fds';
+import { e1, fds } from './fds';
+/** z=这是hh接口 */
 interface hh{
+    /** z=这是hh name */
     name:string
 }
-
-interface Int{
-    age: number
+/** z=这是enum接口 */
+enum Int{
+    /** 这是enum age */
+    age
 }
-
-enum e1 {
-    nan=10,
-    nv=20
-}
-
-export function test2(as: hh, sdf:Int, s:fds & number, sd:e1) {
-
-}
+/** z=这是type接口 */
+type sd = Int | number
 /**
- *  @description zhdjfk
- * @param as 这是参数1
- * @param az 这是参数2
+ * 测试单行注释
+ * @param as - 这是参数1
+ * @param sdf - 这是参数2
  */
-export const test = (as: hh) =>{
-
+export const test = (as: e1, sdf:fds, s: sd, sd = new Date('2021-1-1')):'12' =>{
+    return '12';
 };
+/**
+ *  @description 这是测试函数
+ * @param as 这是参数1
+ * @param sdf 这是参数2
+ */
+export function test2(as: hh, sdf:Int, sd = new Date('2021-1-1')) {
+
+}

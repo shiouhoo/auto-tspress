@@ -1,0 +1,21 @@
+.vp-doc th, .vp-doc td {
+    font-size: 16px;
+    border: unset;
+    padding: unset;
+}
+
+.vp-doc table{
+    display: block; 
+    border-collapse: unset; 
+    margin: unset; 
+    overflow-x: unset; 
+}
+
+.el-table .cell{
+    word-break: break-word;
+}
+
+.vp-doc h3{
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--vp-c-divider);
+}

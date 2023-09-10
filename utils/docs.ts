@@ -1,6 +1,6 @@
 import { cliPath } from './../global';
 import { spawn } from 'child_process';
-import { CollectMap, FileFunctionMap } from '../types';
+import { CollectMap, FileFunctionMap, TypeItem } from '../types';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -36,7 +36,7 @@ const changeFile = (filePath: string, data: string) => {
 /** 删除docs文件夹中原有的md文件 */
 const deleteFolderDocs = ()=> {
     try{
-        for(const item of ['hooks', 'utils', 'interfaces']) {
+        for(const item of ['hooks', 'utils', 'globalTypes']) {
             const folderPath = path.join(cliPath, `docs/${item}`);
             if (fs.existsSync(folderPath)) {
                 fs.readdirSync(folderPath).forEach(function (file) {
@@ -71,16 +71,16 @@ const changeFirstPage = (startPath: string)=>{
 /** 生成文档侧边栏 */
 const createSidebar = (collectMap: CollectMap) => {
     let startPath = '';
-    for(const item of ['hooks', 'utils', 'interfaces']) {
+    for(const item of ['hooks', 'utils', 'globalTypes']) {
         if(!fs.existsSync(path.join(cliPath, `/docs/${item}`))) {
             fs.mkdirSync(path.join(cliPath, `/docs/${item}`));
         }
         const filePath = path.join(cliPath, `/docs/${item}.js`);
         const data = {
             item: [],
-            link: `/${item}/`
+            link: `/${item}/${Object.keys(collectMap[item] || {})[0]?.split('.')?.[0] || ''}`
         };
-            // key 为文件名
+            // key 为完整文件名
         for(const key in collectMap[item] || {}) {
             const fileName = key.split('.')[0];
             data.item.push({
@@ -89,12 +89,9 @@ const createSidebar = (collectMap: CollectMap) => {
             });
             if(!startPath) {
                 startPath = `/${item}/${fileName}`;
-                data.link = `/${item}/${fileName}`;
             }
             // 生成对应的md文件
-            if(item === 'utils') {
-                createContentUtils(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key], key);
-            }
+            createContent(path.join(cliPath, `/docs/${item}/${fileName}.md`), collectMap[item][key], key, <'utils'|'hooks'|'globalTypes'>item, collectMap.globalTypes[key]);
         }
         // 这一项没有任何文档
         if(!collectMap[item] || !Object.keys(collectMap[item]).length) {
@@ -110,28 +107,50 @@ const createSidebar = (collectMap: CollectMap) => {
 };
 
 /** 生成一个文件的md文档 */
-const createContentUtils = (filePath:string, funcs: FileFunctionMap, fileName:string) => {
+const createContent = (filePath:string, funcs: FileFunctionMap, fileName:string, itemType:'utils'|'hooks'|'globalTypes', globalTypeMap: Record<string, TypeItem>) => {
     const mdCreator = new MdCreator();
-    // 函数
-    mdCreator.createTitle(1, fileName);
-    mdCreator.createTitle(2, '函数');
-    mdCreator.createText('以下这个文件的工具函数');
-    for(const funcName in funcs.value) {
-        const func = funcs.value[funcName];
-        mdCreator.createTitle(3, funcName);
-        mdCreator.createText(func.docs?.['@description']?.[0]?.[0]);
-        mdCreator.createParamsTable(func.params, func.docs);
+    if(itemType === 'utils' || itemType === 'hooks') {
+        // 函数
+        mdCreator.createTitle(1, fileName);
+        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数');
+        // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
+        for(const funcName in funcs.value) {
+            const func = funcs.value[funcName];
+            mdCreator.createTitle(3, funcName);
+            mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
+            mdCreator.createParamsTable(func.params, func.docs);
+            // 返回值
+            mdCreator.createTitle(4, '返回值');
+            mdCreator.createText('- 返回类型: ' + (func.returns?.type || 'void'));
+            mdCreator.createText('- 描述: ' + (func.docs?.['@returns']?.[0]?.[0] || '暂无'));
+        }
     }
     // type
-    mdCreator.createTitle(2, '类型');
-    mdCreator.createText('以下这个文件搜用到的类型');
-    for(const typeName in funcs.types) {
-        const type = funcs.types[typeName];
-        mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
-        // mdCreator.createUtilsDescription(type.docs?.['@description']?.[0]?.[0]);
-        mdCreator.createTypesTable(type);
+    const funcTypeShow = ['utils', 'hooks'].includes(itemType) && funcs.types;
+    funcTypeShow && mdCreator.createTitle(2, '类型');
+    const globalTypeTableShow = itemType === 'globalTypes' && globalTypeMap;
+    if(funcTypeShow || globalTypeTableShow) {
+        const map = funcTypeShow ? funcs.types : globalTypeMap;
+        for(const typeName in map) {
+            const type = map[typeName];
+            if(!type) {
+                mdCreator.createTitle(3, typeName);
+                mdCreator.createText('未知类型，可能是第三方包提供');
+                continue;
+            }
+            mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
+            mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
+            if(type.targetType === 'Record') {
+                const key = Object.keys(type.value)[0];
+                mdCreator.createText(`- 类型: Record`);
+                mdCreator.createTsCode(`Record<${key},${(<string>type.value[key].value)}>`);
+            }else{
+                mdCreator.createTypesTable(type);
+            }
+        }
+
     }
-    changeFile(filePath, mdCreator.content);
+    changeFile(filePath, mdCreator.getContent());
 };
 
 const createMarkdown = (collectMap: CollectMap) => {

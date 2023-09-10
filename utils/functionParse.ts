@@ -1,6 +1,7 @@
+import { lineSysbol } from './../global';
 import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params, Returns } from './../types/index';
-import { isBaseType } from './typeAction';
+import { isBaseType, getTypeByText } from './typeAction';
 
 // 判断是否是函数
 export const varibleIsFunction = (variable: VariableStatement) => {
@@ -10,31 +11,38 @@ export const varibleIsFunction = (variable: VariableStatement) => {
 
 // 获取function参数列表
 export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>) => {
-    const params: Params = [];
-    for (const param of declaration.getParameters()) {
-        let type = param.getType().getText();
-        if(type.includes('import')) {
-            type = type.replace(/import(.*?)[.]/, '').trim();
-        }
-        const data = {
-            name: param.getName(),
-            type,
-            isBase: isBaseType(param.getType().getText().trim()),
-            isRequire: param.hasQuestionToken()
-        };
-        params.push(data);
-        if(!data.isBase) {
-            useTypes.add(data.type);
-        }
-    }
-    return params;
+    return getParamsListByVarible(declaration, useTypes);
 };
 
 // 获取箭头函数参数列表
-export const getParamsListByVarible = (declaration: VariableStatement, useTypes: Set<string>) => {
+export const getParamsListByVarible = (declaration: VariableStatement | FunctionDeclaration, useTypes: Set<string>) => {
     const params: Params = [];
-    const headerText: string = declaration.getText().split('\n')[0];
-    const paramsList: string[] = headerText.match(/\((.*)\)/)[1].split(',');
+    const headerText: string = declaration.getText().split(lineSysbol)[0];
+    const paramsList: string[] = [];
+    const paramString = headerText.match(/\((.*)\)/)[1];
+    let currentArg = '';
+    let bracketLevel = 0;
+
+    for (let i = 0;i < paramString.length;i++) {
+        const char = paramString[i];
+
+        if (char === ',' && bracketLevel === 0) {
+            paramsList.push(currentArg.trim());
+            currentArg = '';
+        } else {
+            currentArg += char;
+
+            if (char === '<') {
+                bracketLevel++;
+            } else if (char === '>') {
+                bracketLevel--;
+            }
+        }
+    }
+
+    paramsList.push(currentArg.trim());
+    /** 记录是否import * as */
+    let isAsImport = false;
     for(let p of paramsList) {
         if(!p) continue;
 
@@ -42,27 +50,34 @@ export const getParamsListByVarible = (declaration: VariableStatement, useTypes:
         let name = '';
         let type = '';
         let isBase = true;
+        let defaultValue = '-';
         if(p.includes('=')) {
+            isRequire = false;
+            [name, defaultValue] = p.split('=');
+            type = getTypeByText(defaultValue.trim(), true);
+        }else if(p.includes(':')) {
             if(p.includes('?')) {
                 isRequire = false;
                 p = p.replace('?', '');
             }
-            [name, type] = p.split('=');
-        }else if(p.includes(':')) {
             const [_name, ...rest] = p.split(/[:=]/);
             name = _name;
+            if(rest.join('').includes('.')) isAsImport = true;
+            // 类型为：x.y
             type = rest.join('');
         }else{
             name = p;
             type = null;
         }
         params.push({
-            name: name.trim(),
-            type: type.trim(),
+            name: name && name.trim(),
+            // 处理 import * as
+            type: type && (isAsImport ? getTypeByText(type, false) : type).trim(),
             isBase: (isBase = isBaseType(type)),
-            isRequire
+            isRequire,
+            defaultValue
         });
-        if(!isBase) {
+        if(!isBase && type) {
             useTypes.add(type.trim());
         }
 
@@ -78,7 +93,7 @@ export const getReturns = (declaration: FunctionDeclaration, { typeChecker }, us
     if(returnTypeNode) {
         const returnType = typeChecker.getTypeAtLocation(returnTypeNode);
         type = returnType.getText();
-        if(!isBaseType(type)) {
+        if(!isBaseType(type) && type) {
             useTypes.add(type.trim());
             isBase = false;
         }
@@ -91,11 +106,11 @@ export const getReturns = (declaration: FunctionDeclaration, { typeChecker }, us
 
 // 获取箭头函数返回值
 export const getReturnsByVarible = (declaration: VariableStatement, useTypes: Set<string>): Returns => {
-    const headerText: string = declaration.getText().split('\n')[0];
+    const headerText: string = declaration.getText().split(lineSysbol)[0];
     const match = headerText.match(/\)\s?:(.*?)[{=>]/);
     if(!match) return null;
     let isBase = true;
-    const type = match[1].trim();
+    const type = match[1]?.trim();
     if(!isBaseType(type)) {
         useTypes.add(type);
         isBase = false;
