@@ -1,6 +1,6 @@
 import { FunctionMap, Params, Returns, CollectMap, TypeItem, TypeValue, UseTypes } from './../types/index';
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile, EnumDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph';
-import { gettypeInfosByExportName, getDetailTypeByString } from './typeAction';
+import { gettypeInfosByExportName, getDetailTypeByString, parseTypeImport } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
 import fs from 'fs';
 
@@ -190,7 +190,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 const properties = (<InterfaceDeclaration>object).getProperties();
                 for (const property of properties) {
                     typeObject[property.getName()] = {
-                        value: property.getType().getText(),
+                        value: parseTypeImport(property.getType().getText(), sourceFile.getFilePath()),
                         doc: collectDoc(property.getJsDocs()[0])
                     };
                 }
@@ -220,13 +220,12 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             };
             if (object.isExported()) {
                 globalTypes[name] = tmp;
-            } else {
-                if (useTypes.hooks.has(name)) {
-                    fileHooksTypes[name] = tmp;
-                }
-                if (useTypes.util.has(name)) {
-                    fileUtilTypes[name] = tmp;
-                }
+            }
+            if (useTypes.hooks.has(name)) {
+                fileHooksTypes[name] = tmp;
+            }
+            if (useTypes.util.has(name)) {
+                fileUtilTypes[name] = tmp;
             }
         }
     }

@@ -1,7 +1,8 @@
 import { SourceFile, InterfaceDeclaration, EnumDeclaration } from 'ts-morph';
 import { TypeItem, TypeValue } from '../types';
 import { collectDoc } from './collect';
-import { lineSysbol } from '../global';
+import { cliPath, lineSysbol } from '../global';
+import path from 'path';
 
 // 判断字符串是否为基本类型
 export const isBaseType = (str: string) => {
@@ -19,6 +20,18 @@ export const getTypeByText = (str: string, isDefault): string => {
     }else if(str.includes('.')) {
         if(Number.isNaN(Number(str.split('.')[isDefault ? 0 : 1]))) {
             return str.split('.')[isDefault ? 0 : 1];
+        }
+    }
+    return str;
+};
+/** 解析获取的类型为import() */
+export const parseTypeImport = (str: string, sourceFilePath:string) => {
+    if((str = str.trim()).includes('import(')) {
+        const match = str.match(/import\("(.*?)"\)[.](.+)/)?.map(str => str.trim());
+        if(path.join(match[1]).toString() + '.ts' === path.join(sourceFilePath).toString()) {
+            return str.replace(`import("${match[1]}").`, '');
+        }else{
+            return str.replace(cliPath, '');
         }
     }
     return str;
@@ -91,7 +104,7 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
     }else{
         return [str, 'string'];
     }
-
+    // 配置doc和第二行的键值对
     const keyValuePairs = str.match(/(\/\*\*([\s\S]*?)\*\/|\/\/(.*?))?\s*(\w+):\s*([^\n]+)\s*/g);
     for(const pair of keyValuePairs) {
         let [comment, keyValue] = [null, null];
@@ -100,7 +113,7 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
         }else{
             keyValue = pair;
         }
-        const [key, value] = keyValue.split(':').map(str => str.replaceAll(',', '').trim());
+        const [key, value] = keyValue.split(':').map(str => str.replace(/,\s*$/, '').trim());
         typeObject[key] = {
             value: value,
             doc: comment && {

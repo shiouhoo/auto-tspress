@@ -63,6 +63,7 @@ export const getParamsListByVarible = (declaration: VariableStatement | Function
             const [_name, ...rest] = p.split(/[:=]/);
             name = _name;
             if(rest.join('').includes('.')) isAsImport = true;
+            // 类型为：x.y
             type = rest.join('');
         }else{
             name = p;
