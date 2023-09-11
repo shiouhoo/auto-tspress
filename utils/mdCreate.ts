@@ -53,7 +53,7 @@ export class MdCreator {
             }
         }
         this.content += `#### params参数` + lineSysbol;
-        if(!params.length) {
+        if(!params || !params.length) {
             this.content += `无` + lineSysbol;
             return;
         }

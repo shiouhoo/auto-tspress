@@ -6,6 +6,7 @@ import { isBaseType, getTypeByText } from './typeAction';
 // 判断是否是函数
 export const varibleIsFunction = (variable: VariableStatement | string) => {
     const test = typeof variable === 'string' ? variable : variable.getText().split('\n')[0];
+    console.log(test);
     return test.indexOf('=>') > -1 || test.indexOf('function') > -1;
 };
 
@@ -41,6 +42,7 @@ export const getParamsListByVarible = (declaration: VariableStatement | Function
     }
 
     paramsList.push(currentArg.trim());
+    console.log(headerText, 1, paramString, 2, paramsList);
     /** 记录是否import * as */
     let isAsImport = false;
     for(let p of paramsList) {

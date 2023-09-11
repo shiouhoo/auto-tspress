@@ -48,7 +48,7 @@ export function collectDoc(doc: JSDoc) {
 
 // 处理箭头函数
 function collectVaribleFunc(variable: VariableStatement, ishooks: boolean) {
-    if (!variable.isExported()) return {};
+    if (!variable.isExported()) return null;
     // 判断是否是函数
     if (!varibleIsFunction(variable)) {
         return {};
@@ -56,7 +56,6 @@ function collectVaribleFunc(variable: VariableStatement, ishooks: boolean) {
     // 获取参数和返回值
     const params: Params = getParamsListByVarible(variable, ishooks ? useTypes.hooks : useTypes.util);
     const returns: Returns = getReturnsByVarible(variable, ishooks ? useTypes.hooks : useTypes.util);
-
     return {
         params,
         returns
@@ -64,7 +63,7 @@ function collectVaribleFunc(variable: VariableStatement, ishooks: boolean) {
 }
 // 处理function关键字定义的函数
 function collectFunctionDeclaration(variable: FunctionDeclaration, ishooks: boolean, { typeChecker }) {
-    if (!variable.isExported()) return {};
+    if (!variable.isExported()) return null;
 
     // 获取参数和返回值
     const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util);
@@ -86,8 +85,9 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
     for (const varible of variableStatements) {
         const varibleName = varible.getDeclarationList().getDeclarations()[0].getName();
         // 获取参数和返回值
-        const { params, returns } = collectVaribleFunc(varible, varibleName.startsWith('use'));
-        // if (!params && !returns) continue;
+        const paramsAndReturns = collectVaribleFunc(varible, varibleName.startsWith('use'));
+        if(!paramsAndReturns) continue;
+        const { params, returns } = paramsAndReturns;
         const docMap = collectDoc(varible.getJsDocs()[0]);
         [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, varibleName);
     }
@@ -97,8 +97,9 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
         const funcName = functionDeclaration.getName();
         if (funcName === undefined) break;
         // 获取参数和返回值
-        const { params, returns } = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker });
-        // if (!params && !returns) continue;
+        const paramsAndReturns = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker });
+        if(!paramsAndReturns) continue;
+        const { params, returns } = paramsAndReturns;
         const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
         [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, funcName);
     }
