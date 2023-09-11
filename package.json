@@ -1,13 +1,13 @@
 {
   "name": "auto-tspress",
-  "version": "0.0.8",
+  "version": "0.0.14",
   "description": "通过tsdoc快速生成项目中工具函数的文档",
   "type": "module",
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "rollup -c",
     "r": "node ./lib/index",
-    "dev": "pnpm build && node ./lib/index",
+    "dev": "rollup  --config rollup.dev.config.js && node ./lib/index",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
@@ -19,6 +19,7 @@
   "license": "MIT",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.4",
+    "@rollup/plugin-json": "^6.0.0",
     "@shiouhoo/eslint-config": "^1.0.8",
     "@tsconfig/node18": "^18.2.1",
     "@types/node": "^20.5.6",
@@ -37,7 +38,11 @@
     "vitepress": "1.0.0-rc.9"
   },
   "files": [
-    "docs",
+    "docs/.vitepress/components",
+    "docs/.vitepress/theme",
+    "docs/.vitepress/config.js",
+    "docs/.vitepress/first.md",
+    "docs/.vitepress/index.md",
     "lib"
   ]
 }

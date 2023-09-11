@@ -87,7 +87,7 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
         const varibleName = varible.getDeclarationList().getDeclarations()[0].getName();
         // 获取参数和返回值
         const { params, returns } = collectVaribleFunc(varible, varibleName.startsWith('use'));
-        if (!params && !returns) continue;
+        // if (!params && !returns) continue;
         const docMap = collectDoc(varible.getJsDocs()[0]);
         [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, varibleName);
     }
@@ -95,11 +95,25 @@ function collectFunctions(sourceFile: SourceFile, { typeChecker }): {
     const functions = sourceFile.getFunctions();
     for (const functionDeclaration of functions) {
         const funcName = functionDeclaration.getName();
+        if (funcName === undefined) break;
         // 获取参数和返回值
         const { params, returns } = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker });
-        if (!params && !returns) continue;
+        // if (!params && !returns) continue;
         const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
         [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, funcName);
+    }
+    // 默认导出
+    const defaultExport = sourceFile.getDefaultExportSymbol();
+    if (defaultExport) {
+        const defaultDeclaraation:any = defaultExport.getDeclarations()[0];
+        const ishooks = sourceFile.getBaseName().startsWith('use');
+        if (varibleIsFunction(defaultDeclaraation.getText())) {
+            // 获取参数和返回值
+            const params: Params = getParamsListByVarible(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
+            const returns: Returns = getReturnsByVarible(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
+            const docMap = collectDoc(defaultDeclaraation.getJsDocs()[0]);
+            [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, (ishooks ? sourceFile.getBaseName() : 'default') + '(默认导出)');
+        }
     }
     return { functionDeclarationMap, hooksDeclarationMap };
 }
@@ -287,6 +301,7 @@ export function collect(paths) {
     const sourceFiles = project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {
+        if(sourceFile.getBaseName().endsWith('.d.ts')) continue;
         // 搜集hooks用到过的接口类型
         useTypes = {
             util: new Set<string>(),
@@ -311,7 +326,7 @@ export function collect(paths) {
         if(globalType) {
             collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
         }
-        console.log(useTypes);
+        // console.log(useTypes);
     }
     return collectMap;
 }

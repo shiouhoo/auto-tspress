@@ -7,10 +7,11 @@ tspress内部采用了ts-morph库中的AST API来收集所需信息，可以识�
 
 # 使用
 
-### 1.全局安装
+### 1.全局安装(推荐)
+如果使用淘宝源安装，可能不是最新的包，请确保为最新版本，可以使用npm官方源安装
 
 ```node
-npm i -g auto-tspress
+npm i -g auto-tspress@latest
 ```
 
 进入一个项目目录，运行命令：
@@ -19,11 +20,11 @@ npm i -g auto-tspress
 auto-tspress -d "utils.ts"
 ```
 
-### 2.  pnpx(推荐)
+### 2.  npx或pnpx
 
-进入一个项目目录，运行命令即可（pnpx不会在本地安装，所以每次都会下载最新的包，可能会等待一会，受不了的朋友可以全局安装）
+进入一个项目目录，运行命令即可（npx不会在本地安装，所以每次都会下载最新的包，可能会等待一会，受不了的朋友可以全局安装）
 ```npm
-pnpx auto-tspress -d "utils.ts"
+npx auto-tspress -d "utils.ts"
 ```
 随后，会在 http://localhost:5073中启动一个静态服务器。
 
@@ -53,3 +54,7 @@ interface hh{
 }
 ```
 
+# 常见错误
+
+## 没有权限
+ 如果遇到这种错误，Error: EPERM: operation not permitted, mkdir 'D:\software\nvm\v16.13.0\node_modules\auto-tspress\docs\hooks'，请使用管理员权限运行命令行。或者参考[这里](https://www.cnblogs.com/echo-7s/p/16610255.html)设置。如果是nvm安装的node，需要在nvm的安装目录下设置，比如：nvm\v16.13.0。

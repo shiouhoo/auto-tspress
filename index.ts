@@ -15,7 +15,7 @@ const init = () => {
             console.log('正在解析文件，请稍后', dirMap.dir);
             const collectMap: CollectMap = collect(dirMap.dir);
 
-            // console.log('数据收集成功，开始生成文档', JSON.stringify(collectMap, null, 2));
+            console.log('数据收集成功，开始生成文档');
 
             createDocs(collectMap).then(() => {
 
