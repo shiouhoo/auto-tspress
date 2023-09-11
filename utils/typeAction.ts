@@ -65,7 +65,7 @@ export const objectToString = (obj) => {
 };
 
 /** 将interface，enum的信息转为对象 */
-const getDetailByExport = (namedExport:InterfaceDeclaration | EnumDeclaration)=>{
+const getDetailByExport = (namedExport:InterfaceDeclaration | EnumDeclaration): TypeValue=>{
     const typeObject: TypeValue = {};
     if(namedExport instanceof InterfaceDeclaration) {
         for(const member of namedExport.getProperties()) {
@@ -98,9 +98,9 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
             };
         }
         return [typeObject, targetType];
-    }else if(str.match(/\{([^{}]+)\}\[\]/)) {
+    }else if(str.match(/\{([\s\S]+)\}\[\]$/)) {
         targetType = 'array';
-    }else if(str.match(/\{([^{}]+)\}/)) {
+    }else if(str.match(/\{([\s\S]+)\}$/)) {
         targetType = 'object';
     }else{
         return [str, 'string'];

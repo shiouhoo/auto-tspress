@@ -2,7 +2,7 @@ import { FunctionMap, Params, Returns, CollectMap, TypeItem, TypeValue, UseTypes
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile, EnumDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph';
 import { gettypeInfosByExportName, getDetailTypeByString, parseTypeImport } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
-import { setting } from '../global';
+import { lineSysbol, setting } from '../global';
 
 let useTypes: UseTypes;
 // 更新一个函数声明
@@ -131,12 +131,12 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         if(!importDeclaration.getImportClause()) continue;
         // 被导入模块名
         const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-        let moduleSpecifierSourceFile;
+        let moduleSpecifierSourceFile = importDeclaration.getModuleSpecifierSourceFile();
         // 检查是否以@开头
         if (moduleSpecifier.startsWith('@')) {
             // 将@替换为实际路径
             const actualPath = moduleSpecifier.replace('@', setting['@']);
-            moduleSpecifierSourceFile = new Project().getSourceFile(actualPath) || importDeclaration.getModuleSpecifierSourceFile();
+            moduleSpecifierSourceFile ||= new Project().getSourceFile(actualPath);
         }
         if(!moduleSpecifierSourceFile) continue;
         // 默认导入
@@ -230,7 +230,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                     };
                 }
             } else if (type === 'type') {
-                [typeObject, targetType] = getDetailTypeByString(object.getText().split('=')[1]);
+                [typeObject, targetType] = getDetailTypeByString(object.getText().split(/type.*?=/)[1]);
             } else if (type === 'enum') {
                 for (const item of (<EnumDeclaration>object).getMembers()) {
                     typeObject[item.getName()] = {
@@ -290,6 +290,7 @@ const collectTypes = (sourceFile: SourceFile, useTypes: UseTypes): {
         fileType,
     };
 };
+
 export function collect(paths) {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
@@ -315,26 +316,27 @@ export function collect(paths) {
             util: new Set<string>(),
             hooks: new Set<string>(),
         };
+        collectFileDoc(sourceFile);
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { typeChecker });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
-
+        // hooks
         if(hooksDeclarationMap) {
             collectMap.hooks[sourceFile.getBaseName()] = {
                 value: hooksDeclarationMap,
                 types: Object.keys(fileType.hooks).length ? fileType.hooks : null
             };
         }
-
+        // utils
         if(functionDeclarationMap) {
             collectMap.utils[sourceFile.getBaseName()] = {
                 value: functionDeclarationMap,
                 types: Object.keys(fileType.util).length ? fileType.util : null
             };
         }
+        // globalTypes
         if(globalType) {
             collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
         }
-        // console.log(useTypes);
     }
     return collectMap;
 }
