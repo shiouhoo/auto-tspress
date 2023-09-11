@@ -10,6 +10,10 @@ const __filenameNew = fileURLToPath(import.meta.url);
 
 export const __dirnameNew = path.dirname(__filenameNew);
 
+export const setting = {
+    '@': 'src'
+};
+
 // 根据系统返回对应文件系统的换行符
 function getReturnSymbol() {
     switch (os.platform()) {
