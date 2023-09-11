@@ -301,6 +301,7 @@ export function collect(paths) {
     const sourceFiles = project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {
+        if(sourceFile.getBaseName().endsWith('.d.ts')) continue;
         // 搜集hooks用到过的接口类型
         useTypes = {
             util: new Set<string>(),
@@ -325,7 +326,7 @@ export function collect(paths) {
         if(globalType) {
             collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
         }
-        console.log(useTypes);
+        // console.log(useTypes);
     }
     return collectMap;
 }

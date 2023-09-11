@@ -1,6 +1,4 @@
 import ts from 'rollup-plugin-typescript2';
-import { terser } from 'rollup-plugin-terser';
-import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -21,8 +19,6 @@ export default {
     },
     plugins: [ // 这个插件是有执行顺序的
         ts({ tsconfig: './tsconfig.json', tsconfigOverride: override }),
-        commonjs(),
         json(),
-        terser(),
     ]
 };

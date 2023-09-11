@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { version } from '../package.json';
 
 export const command = () => {
 
@@ -7,7 +8,7 @@ export const command = () => {
     program
         .name('auto-tspress')
         .description('快速生成项目中工具函数的文档')
-        .version('0.0.9');
+        .version(version);
 
     program
         .option('-d, --dir <> [list]', '文件夹路径');
