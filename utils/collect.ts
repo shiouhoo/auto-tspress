@@ -2,7 +2,7 @@ import { FunctionMap, Params, Returns, CollectMap, TypeItem, TypeValue, UseTypes
 import { Project, VariableStatement, FunctionDeclaration, JSDoc, SourceFile, EnumDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph';
 import { gettypeInfosByExportName, getDetailTypeByString, parseTypeImport } from './typeAction';
 import { varibleIsFunction, getReturns, getReturnsByVarible, getParamsList, getParamsListByVarible } from './functionParse';
-import fs from 'fs';
+import { setting } from '../global';
 
 let useTypes: UseTypes;
 // 更新一个函数声明
@@ -127,11 +127,23 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
 
     const importDeclarations = sourceFile.getImportDeclarations();
     for (const importDeclaration of importDeclarations) {
-        /** 默认导入的名称 */
-        const name = importDeclaration.getImportClause().getSymbol()?.getEscapedName();
+        // 不是类型的导入
+        if(!importDeclaration.getImportClause()) continue;
+        // 被导入模块名
+        const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
+        let moduleSpecifierSourceFile;
+        // 检查是否以@开头
+        if (moduleSpecifier.startsWith('@')) {
+            // 将@替换为实际路径
+            const actualPath = moduleSpecifier.replace('@', setting['@']);
+            moduleSpecifierSourceFile = new Project().getSourceFile(actualPath) || importDeclaration.getModuleSpecifierSourceFile();
+        }
+        if(!moduleSpecifierSourceFile) continue;
         // 默认导入
+        /** 默认导入的名称 */
+        const name = importDeclaration.getImportClause()?.getSymbol()?.getEscapedName();
         if (name && [...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
-            const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, true);
+            const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
             if (useTypes.hooks.has(name)) {
                 fileImportsHooks[name] = t;
                 // useTypes.hooks.delete(name);
@@ -145,7 +157,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         for (const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
             if ([...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) {
-                const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), name, false);
+                const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false);
                 if (useTypes.hooks.has(name)) {
                     fileImportsHooks[name] = t;
                     // useTypes.hooks.delete(name);
@@ -293,12 +305,7 @@ export function collect(paths) {
     const typeChecker = project.getTypeChecker();
 
     // 添加要分析的文件
-    for (const path of paths.split(' ')) {
-        if(!path.includes('*') && !fs.existsSync(path)) {
-            throw new Error(`不存在的文件：${path}`);
-        }
-        project.addSourceFilesAtPaths(path);
-    }
+    project.addSourceFilesAtPaths(paths.split(' '));
     const sourceFiles = project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {

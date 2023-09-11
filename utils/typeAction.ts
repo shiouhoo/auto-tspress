@@ -65,18 +65,19 @@ export const objectToString = (obj) => {
 };
 
 /** 将interface，enum的信息转为对象 */
-const getDetailByExport = (namedExport, type:string)=>{
-    const members = namedExport.getMembers();
+const getDetailByExport = (namedExport:InterfaceDeclaration | EnumDeclaration)=>{
     const typeObject: TypeValue = {};
-    for (const member of members) {
-        if(type === 'interface') {
+    if(namedExport instanceof InterfaceDeclaration) {
+        for(const member of namedExport.getProperties()) {
             typeObject[member.getName()] = {
                 value: member.getTypeNode()?.getText(),
                 doc: collectDoc(member.getJsDocs()[0])
             };
-        }else if(type === 'enum') {
+        }
+    }else if(namedExport instanceof EnumDeclaration) {
+        for(const member of namedExport.getMembers()) {
             typeObject[member.getName()] = {
-                value: member.getValue(),
+                value: member.getValue() + '',
                 doc: collectDoc(member.getJsDocs()[0])
             };
         }
@@ -153,13 +154,13 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
             if(namedExport instanceof InterfaceDeclaration) {
                 return {
                     type: 'interface',
-                    value: getDetailByExport(namedExport, 'interface') || '',
+                    value: getDetailByExport(namedExport) || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else if(namedExport instanceof EnumDeclaration) {
                 return {
                     type: 'enum',
-                    value: getDetailByExport(namedExport, 'enum') || '',
+                    value: getDetailByExport(namedExport) || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }if(exportText.includes('type')) {

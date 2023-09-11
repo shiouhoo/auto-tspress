@@ -11,7 +11,8 @@ export const command = () => {
         .version(version);
 
     program
-        .option('-d, --dir <> [list]', '文件夹路径');
+        .option('-d, --dir <> [list]', '文件夹路径')
+        .option('-@ <> [list]', '路径别名');
 
     // 如果没有提供任何参数，显示帮助信息
     if (!process.argv.slice(2).length) {
