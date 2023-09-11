@@ -10,7 +10,7 @@
 
 # 使用
 
-### 1.全局安装(推荐)
+### 1.全局安装
 如果使用淘宝源安装，可能不是最新的包，请确保为最新版本，可以使用npm官方源安装
 
 ```node
@@ -29,11 +29,40 @@ auto-tspress -d "utils.ts"
 ```npm
 npx auto-tspress -d "utils.ts"
 ```
-随后，会在 http://localhost:5073中启动一个静态服务器。
+###  3. 局部安装(推荐)
 
-# 命令参数
+进入你的项目，安装auto-tspress
 
-在使用过程中，auto-tspress提供了多个命令支持运行。
+```ts
+pnpm i auto-tspress -D
+```
+
+然后在你的package.json加入以下命令
+
+```ts
+// window
+"scripts": {
+	"tspress": ".\\node_modules\\.bin\\auto-tspress"
+}
+// macOS || linux
+"scripts": {
+	"tspress": "./node_modules/.bin/auto-tspress"
+}
+```
+
+运行命令tspress即可使用。
+
+# 配置
+
+我们推荐使用局部安装的方式，在package.json中可以配置auto-tspress
+```ts
+"auto-tspress": {
+    "dir": "src/hooks/*.ts !main.ts",
+    "@": "src"
+},
+```
+
+同样，在使用过程中，auto-tspress提供了多个命令支持运行，如果你不想在项目中安装auto-tspress就只能使用该方式。你的命令可能长这样：`auto-tspress -d "src/hooks/*.ts" -@ src`
 
 | 参数      | 说明                                                         | 必传 |
 | --------- | ------------------------------------------------------------ | ---- |

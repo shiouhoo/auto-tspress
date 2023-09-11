@@ -1,5 +1,5 @@
 import path from 'path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'url';
 import os from 'os';
 // 脚手架路径
 export const cliPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../');
@@ -11,6 +11,7 @@ const __filenameNew = fileURLToPath(import.meta.url);
 export const __dirnameNew = path.dirname(__filenameNew);
 
 export const setting = {
+    'dir': '',
     '@': 'src'
 };
 

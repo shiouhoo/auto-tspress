@@ -15,9 +15,9 @@ export const command = () => {
         .option('-@ <> [list]', '路径别名');
 
     // 如果没有提供任何参数，显示帮助信息
-    if (!process.argv.slice(2).length) {
-        program.help();
-    }
+    // if (!process.argv.slice(2).length) {
+    //     program.help();
+    // }
 
     return program;
 

@@ -334,7 +334,6 @@ export function collect(paths) {
         const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { typeChecker });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
-        console.log(fileDocMap);
         // hooks
         if(hooksDeclarationMap) {
             collectMap.hooks[sourceFile.getBaseName()] = {
