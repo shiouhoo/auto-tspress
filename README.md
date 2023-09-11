@@ -3,7 +3,10 @@
 
 # why tspress
 
-tspress内部采用了ts-morph库中的AST API来收集所需信息，可以识别函数参数中的ts类型，不用重复在tsdoc中声明。其次，采用了vitepress来生成文档网站，符合主流审美，观看更加的清楚。
+- 支持读取函数参数ts类型，不需要在函数中再次声明
+- 支持文件doc
+- 支持文件参数使用通配符
+- 采用了vitepress来生成文档网站，简洁好看
 
 # 使用
 
@@ -30,7 +33,7 @@ npx auto-tspress -d "utils.ts"
 
 # 命令参数
 
-在使用过程中，tspress提供了多个命令支持运行。
+在使用过程中，auto-tspress提供了多个命令支持运行。
 
 | 参数      | 说明                                                         | 必传 |
 | --------- | ------------------------------------------------------------ | ---- |
@@ -54,6 +57,28 @@ interface hh{
     name:string
 }
 ```
+
+# 文件doc
+
+这一点没有找tsdoc官方中找到，不过auto-tspress也实现了，基本和tsdoc保持一致，以下是tag说明
+
+| tag          | 说明                                 | 实例             |
+| ------------ | ------------------------------------ | ---------------- |
+| @file        | 指明这是文件注释                     | @file            |
+| @author      | 作者                                 | @author shiouhoo |
+| @description | 文件说明，不同于tsdoc，该tag不能省略 | @description XX  |
+| @date        | 文件创建日期                         | @date 2023-1-1   |
+
+```ts
+/**
+ * @file
+ * @description 这是hooks文件
+ * @author 我
+ * @date 2023-1-1
+ */
+```
+
+
 
 # 常见错误
 

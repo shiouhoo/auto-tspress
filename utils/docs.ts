@@ -1,6 +1,6 @@
 import { cliPath } from './../global';
 import { spawn } from 'child_process';
-import { CollectMap, FileFunctionMap, TypeItem } from '../types';
+import { CollectMap, FileMap, TypeItem } from '../types';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -107,11 +107,12 @@ const createSidebar = (collectMap: CollectMap) => {
 };
 
 /** 生成一个文件的md文档 */
-const createContent = (filePath:string, funcs: FileFunctionMap, fileName:string, itemType:'utils'|'hooks'|'globalTypes', globalTypeMap: Record<string, TypeItem>) => {
+const createContent = (filePath:string, funcs: FileMap, fileName:string, itemType:'utils'|'hooks'|'globalTypes', globalTypeMap: Record<string, TypeItem>) => {
     const mdCreator = new MdCreator();
+    mdCreator.createTitle(1, fileName);
+    mdCreator.createFileDoc(funcs.fileDoc);
     if(itemType === 'utils' || itemType === 'hooks') {
         // 函数
-        mdCreator.createTitle(1, fileName);
         mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数');
         // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
         for(const funcName in funcs.value) {

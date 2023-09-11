@@ -19,3 +19,6 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--vp-c-divider);
 }
+.vp-doc h2{
+    margin: 0;
+}

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { command } from './utils/command';
 import { collect } from './utils/collect';
 import { createDocs } from './utils/docs';

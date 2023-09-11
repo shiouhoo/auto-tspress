@@ -44,6 +44,20 @@ export class MdCreator {
         this.content += code + lineSysbol;
         this.content += '```' + lineSysbol;
     }
+    // 创建文件说明
+    createFileDoc(doc: Record<string, string>) {
+        if(!doc) return;
+        if(doc['@description']) {
+            this.content += `- 描述：${doc['@description']}` + lineSysbol;
+        }
+        if(doc['@author']) {
+            this.content += `- 作者：${doc['@author']}` + lineSysbol;
+        }
+        if(doc['@date']) {
+
+            this.content += `- 更新日期：${doc['@date']}` + lineSysbol;
+        }
+    }
     // 创建参数表格
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};

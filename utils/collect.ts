@@ -291,6 +291,21 @@ const collectTypes = (sourceFile: SourceFile, useTypes: UseTypes): {
     };
 };
 
+// 收集文件注释
+const collectFileDoc = (sourceFile: SourceFile) => {
+    const fileText = sourceFile.getFullText().trim();
+    const match = fileText.match(/^\/\*\*\s*\n([\s\S]*?)\s*\*\//);
+    const fileDocMap: Record<string, string> = {};
+    if(match && match[1].includes('@file')) {
+        for(const line of match[1].split(lineSysbol)) {
+            if(line.includes('@file')) continue;
+            const [tagName, ...rest] = line.replace(/^[ *]+?@/, '@').split(' ');
+            fileDocMap[tagName] = rest.join();
+        }
+    }
+    return Object.keys(fileDocMap).length ? fileDocMap : null;
+};
+
 export function collect(paths) {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
@@ -316,21 +331,24 @@ export function collect(paths) {
             util: new Set<string>(),
             hooks: new Set<string>(),
         };
-        collectFileDoc(sourceFile);
+        const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { typeChecker });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
+        console.log(fileDocMap);
         // hooks
         if(hooksDeclarationMap) {
             collectMap.hooks[sourceFile.getBaseName()] = {
                 value: hooksDeclarationMap,
-                types: Object.keys(fileType.hooks).length ? fileType.hooks : null
+                types: Object.keys(fileType.hooks).length ? fileType.hooks : null,
+                fileDoc: fileDocMap
             };
         }
         // utils
         if(functionDeclarationMap) {
             collectMap.utils[sourceFile.getBaseName()] = {
                 value: functionDeclarationMap,
-                types: Object.keys(fileType.util).length ? fileType.util : null
+                types: Object.keys(fileType.util).length ? fileType.util : null,
+                fileDoc: fileDocMap
             };
         }
         // globalTypes

@@ -6,7 +6,7 @@ import interfacesConfig from '../globalTypes.js'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   lang: 'en-US',
-  title: "tspress 文档",
+  title: "auto-tspress 文档",
   description: "点击开始查看你的文档",
   themeConfig: {    
     nav: [
