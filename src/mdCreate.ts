@@ -66,7 +66,7 @@ export class MdCreator {
         const doc = {};
         if(docs) {
             for(const item of docs['@param'] || []) {
-                doc[item[0]] = item.slice(1, item.length).join('').replace(/[- ]+/g, '');
+                doc[item[0]] = item.slice(1, item.length).join(' ').replace(/^[- ]+/g, '');
             }
         }
         log.logCollect('创建了一个参数表格：' + JSON.stringify(params, null, 2), 'doc依赖：' + JSON.stringify(doc, null, 2));

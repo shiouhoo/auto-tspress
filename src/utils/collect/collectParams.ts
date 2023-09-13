@@ -2,6 +2,7 @@ import { lineSysbol } from '@/global';
 import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params } from '@/types';
 import { getTypeByText, isBaseType } from '../type/typeParse';
+import { splitFirstChar } from '../stringUtil';
 
 // 获取function参数列表
 export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>) => {
@@ -54,11 +55,10 @@ export const getParamsListByVarible = (declaration: VariableStatement | Function
                 isRequire = false;
                 p = p.replace('?', '');
             }
-            const [_name, ...rest] = p.split(/[:=]/);
-            name = _name;
-            if(rest.join('').includes('.')) isAsImport = true;
-            // 类型为：x.y
-            type = rest.join('');
+            // 用第一个：分割参数和类型
+            [name, type] = splitFirstChar(p, ':');
+            // 类型为：x.y   x为文件名
+            if(type.includes('.')) isAsImport = true;
         }else{
             name = p;
             type = null;

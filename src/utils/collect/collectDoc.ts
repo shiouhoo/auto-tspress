@@ -1,5 +1,6 @@
 import { JSDoc, SourceFile } from 'ts-morph';
 import { lineSysbol } from '../../global';
+import { splitFirstChar } from '../stringUtil';
 
 // 收集jsDoc
 export function collectDoc(doc: JSDoc) {
@@ -8,11 +9,11 @@ export function collectDoc(doc: JSDoc) {
         comment: [[doc.getComment() as string || '']]
     };
     for (const jsDocTag of doc.getTags()) {
-        const [tagName, ...rest] = jsDocTag.getText().replaceAll('*', '').trim().split(' ');
+        const [tagName, rest] = splitFirstChar(jsDocTag.getText().replaceAll('*', ''), ' ', true);
         if (docMap[tagName]) {
-            docMap[tagName].push(rest);
+            docMap[tagName].push(splitFirstChar(rest, ' ', true) as string[]);
         } else {
-            docMap[tagName] = [rest];
+            docMap[tagName] = [splitFirstChar(rest, ' ', true) as string[]];
         }
     }
     return Object.keys(docMap).length ? docMap : null;
