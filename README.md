@@ -3,11 +3,14 @@
 
 # why tspress
 
-tspress内部采用了ts-morph库中的AST API来收集所需信息，可以识别函数参数中的ts类型，不用重复在tsdoc中声明。其次，采用了vitepress来生成文档网站，符合主流审美，观看更加的清楚。
+- 支持读取函数参数ts类型，不需要在函数中再次声明
+- 支持文件doc
+- 支持文件参数使用通配符
+- 采用了vitepress来生成文档网站，简洁好看
 
 # 使用
 
-### 1.全局安装(推荐)
+### 1.全局安装
 如果使用淘宝源安装，可能不是最新的包，请确保为最新版本，可以使用npm官方源安装
 
 ```node
@@ -26,16 +29,44 @@ auto-tspress -d "utils.ts"
 ```npm
 npx auto-tspress -d "utils.ts"
 ```
-随后，会在 http://localhost:5073中启动一个静态服务器。
+###  3. 局部安装(推荐)
 
-# 命令参数
+进入你的项目，安装auto-tspress
 
-在使用过程中，tspress提供了多个命令支持运行。
+```ts
+pnpm i auto-tspress -D
+```
+
+然后在你的package.json加入以下命令
+
+```ts
+"scripts": {
+	"tspress": "auto-tspress"
+}
+```
+
+运行命令tspress即可使用(此script还未加入配置，尚不可使用)。
+
+# 配置
+
+## package.json
+我们推荐使用局部安装的方式，在package.json中可以配置auto-tspress
+```ts
+"auto-tspress": {
+    "dir": "src/hooks/*.ts !main.ts",
+    "@": "src"
+},
+```
+## 命令行参数
+同样，在使用过程中，auto-tspress提供了多个命令支持运行，如果你不想在项目中安装auto-tspress就只能使用该方式。你的命令可能长这样：`auto-tspress -d "src/hooks/*.ts" -@ src`
+## 配置详情
 
 | 参数      | 说明                                                         | 必传 |
 | --------- | ------------------------------------------------------------ | ---- |
-| -d或--dir | 要解析的文件，支持通配符解析，如果有多个文件需要加上引号，如“utils/\*{.d.ts,.ts} index.ts”,如果你想排除某个文件，可以使用!,如“src/\*\*/\*.ts  !main.ts” | 是   |
+| -d或--dir | 要解析的文件，支持通配符解析，如果有多个文件需要加上引号，如“utils/\*{.d.ts,.ts} index.ts”,如果你想包含整个文件夹，但是排除某个文件，可以使用!,如“src/\*\*/\*  !*/main.ts”。 | 是   |
 | -@ | 如果你的项目使用了路径别名请配置该参数，默认值为`src` | 否   |
+| -p或--port | 设置运行端口，默认值为`5073`（当端口占用时会自动加1） | 否   |
+| --print | 生成文档时是否输出文件信息，默认值为`false` | 否   |
 
 # tsdoc
 
@@ -54,6 +85,28 @@ interface hh{
     name:string
 }
 ```
+
+# 文件doc
+
+这一点没有找tsdoc官方中找到，不过auto-tspress也实现了，基本和tsdoc保持一致，以下是tag说明
+
+| tag          | 说明                                 | 实例             |
+| ------------ | ------------------------------------ | ---------------- |
+| @file        | 指明这是文件注释                     | @file            |
+| @author      | 作者                                 | @author shiouhoo |
+| @description | 文件说明，不同于tsdoc，该tag不能省略 | @description XX  |
+| @date        | 文件创建日期                         | @date 2023-1-1   |
+
+```ts
+/**
+ * @file
+ * @description 这是hooks文件
+ * @author 我
+ * @date 2023-1-1
+ */
+```
+
+
 
 # 常见错误
 

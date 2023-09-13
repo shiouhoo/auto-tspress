@@ -43,10 +43,11 @@ export interface TypeItem {
     targetType?: 'object' | 'array' | 'string' | 'Record'
     docs: Record<string, string[][]>
 }
-/** 一个函数的收集容器对象 */
-export type FileFunctionMap = {
+/** 一个文件的收集容器对象 */
+export type FileMap = {
     types: Record<string, TypeItem>,
     value: FunctionMap,
+    fileDoc: Record<string, string>
 }
 export interface CollectMap {
     /**
@@ -55,8 +56,8 @@ export interface CollectMap {
      *     value:{}
      * }
      */
-    hooks: Record<string, FileFunctionMap>,
-    utils: Record<string, FileFunctionMap>,
+    hooks: Record<string, FileMap>,
+    utils: Record<string, FileMap>,
     globalTypes: Record<string, Record<string, TypeItem>>
 }
 /** 用于收集函数中用到的类型 */

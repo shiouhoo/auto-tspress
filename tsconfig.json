@@ -5,11 +5,17 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "outDir": "./lib",
-        "resolveJsonModule": true
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+        }
     },
     "include": [
         "index.ts",
-        "utils/**/*",
+        "src/**/*",
     ],
     "exclude": [
         "node_modules",

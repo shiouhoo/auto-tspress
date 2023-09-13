@@ -1,13 +1,8 @@
-import { lineSysbol } from './../global';
+import { lineSysbol } from '@/global';
 import { FunctionDeclaration, VariableStatement } from 'ts-morph';
-import { Params, Returns } from './../types/index';
-import { isBaseType, getTypeByText } from './typeAction';
-
-// 判断是否是函数
-export const varibleIsFunction = (variable: VariableStatement | string) => {
-    const test = typeof variable === 'string' ? variable : variable.getText().split('\n')[0];
-    return test.indexOf('=>') > -1 || test.indexOf('function') > -1;
-};
+import { Params } from '@/types';
+import { getTypeByText, isBaseType } from '../type/typeParse';
+import { splitFirstChar } from '../stringUtil';
 
 // 获取function参数列表
 export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>) => {
@@ -60,11 +55,10 @@ export const getParamsListByVarible = (declaration: VariableStatement | Function
                 isRequire = false;
                 p = p.replace('?', '');
             }
-            const [_name, ...rest] = p.split(/[:=]/);
-            name = _name;
-            if(rest.join('').includes('.')) isAsImport = true;
-            // 类型为：x.y
-            type = rest.join('');
+            // 用第一个：分割参数和类型
+            [name, type] = splitFirstChar(p, ':');
+            // 类型为：x.y   x为文件名
+            if(type.includes('.')) isAsImport = true;
         }else{
             name = p;
             type = null;
@@ -83,40 +77,4 @@ export const getParamsListByVarible = (declaration: VariableStatement | Function
 
     }
     return params;
-};
-//  根据function函数获取函数返回值列表
-export const getReturns = (declaration: FunctionDeclaration, { typeChecker }, useTypes: Set<string>):Returns => {
-
-    const returnTypeNode = declaration.getReturnTypeNode();
-    let type = '';
-    let isBase = true;
-    if(returnTypeNode) {
-        const returnType = typeChecker.getTypeAtLocation(returnTypeNode);
-        type = returnType.getText();
-        if(!isBaseType(type) && type) {
-            useTypes.add(type.trim());
-            isBase = false;
-        }
-    }
-    return {
-        type,
-        isBase
-    };
-};
-
-// 获取箭头函数返回值
-export const getReturnsByVarible = (declaration: VariableStatement, useTypes: Set<string>): Returns => {
-    const headerText: string = declaration.getText().split(lineSysbol)[0];
-    const match = headerText.match(/\)\s?:(.*?)[{=>]/);
-    if(!match) return null;
-    let isBase = true;
-    const type = match[1]?.trim();
-    if(!isBaseType(type)) {
-        useTypes.add(type);
-        isBase = false;
-    }
-    return {
-        type,
-        isBase
-    };
 };

@@ -1,6 +1,6 @@
 {
   "name": "auto-tspress",
-  "version": "0.0.18",
+  "version": "0.0.25",
   "description": "通过tsdoc快速生成项目中工具函数的文档",
   "type": "module",
   "scripts": {
@@ -44,5 +44,9 @@
     "docs/.vitepress/first.md",
     "docs/.vitepress/index.md",
     "lib"
+  ],
+  "keywords": [
+    "tsdoc",
+    "文档生成"
   ]
 }

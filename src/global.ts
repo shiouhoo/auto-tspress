@@ -1,6 +1,6 @@
 import path from 'path';
-import { fileURLToPath } from 'node:url';
-import os from 'os';
+import { fileURLToPath } from 'url';
+
 // 脚手架路径
 export const cliPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../');
 // 项目路径
@@ -11,24 +11,22 @@ const __filenameNew = fileURLToPath(import.meta.url);
 export const __dirnameNew = path.dirname(__filenameNew);
 
 export const setting = {
-    '@': 'src'
+    'dir': '',
+    '@': 'src',
+    'isPrintCollect': false,
+    'port': 5073
 };
 
 // 根据系统返回对应文件系统的换行符
-function getReturnSymbol() {
-    switch (os.platform()) {
-    case 'linux':
-    case 'darwin': return '\n'; // macOS
-    case 'win32': return '\r\n'; // windows
-    case 'aix':
-    case 'freebsd':
-    case 'openbsd':
-    case 'sunos':
-    default: return '\n';
+export function setReturnSymbol(content: string) {
+    if (content.includes('\r\n')) {
+        lineSysbol = '\r\n';
+    } else if (content.includes('\n')) {
+        lineSysbol = '\n';
     }
 }
 
-export const lineSysbol = getReturnSymbol();
+export let lineSysbol = '\n';
 /** 判断路径是否相等，file1：完整路径，file2：相对路径 */
 export const isSameFilePath = (file1: string, file2: string) => {
     if(!file2.includes('@')) {

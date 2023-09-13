@@ -1,6 +1,7 @@
-import { lineSysbol } from '../global';
-import { Params, TypeItem, TypeValue } from '../types';
-import { objectToString } from './typeAction';
+import { lineSysbol } from './global';
+import { Params, TypeItem, TypeValue } from './types';
+import { objectToString, escapeSpecialChars } from './utils/stringUtil';
+import { log } from './log';
 
 export class MdCreator {
     header: string;
@@ -29,14 +30,16 @@ export class MdCreator {
         this.setup += str + lineSysbol;
     }
     // 创建标题
-    createTitle(level:1|2|3|4|5|6, title:string) {
+    createTitle(level:1|2|3|4|5|6, title:string, isLog = true) {
         if(!title) return;
+        isLog && log.logCollect('创建了一个标题：' + title);
         this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
     // 创建函数说明
     createText(text: string) {
         if(!text) return;
-        this.content += text + '<br />' + lineSysbol;
+        log.logCollect('创建了一段文本：' + text);
+        this.content += escapeSpecialChars(text) + '<br />' + lineSysbol;
     }
     // 创建ts代码块
     createTsCode(code: string) {
@@ -44,20 +47,40 @@ export class MdCreator {
         this.content += code + lineSysbol;
         this.content += '```' + lineSysbol;
     }
+    // 创建文件说明
+    createFileDoc(doc: Record<string, string>) {
+        log.logCollect('创建了一个文件说明：' + JSON.stringify(doc, null, 2));
+        if(!doc) return;
+        if(doc['@description']) {
+            this.content += `- 描述：${escapeSpecialChars(doc['@description'])}` + lineSysbol;
+        }
+        if(doc['@author']) {
+            this.content += `- 作者：${escapeSpecialChars(doc['@author'])}` + lineSysbol;
+        }
+        if(doc['@date']) {
+            this.content += `- 更新日期：${escapeSpecialChars(doc['@date'])}` + lineSysbol;
+        }
+    }
+    // 创建返回类型
+    createReturns(text: string, type: 'type' | 'describe') {
+        const typeText = type === 'type' ? '返回类型' : '描述';
+        log.logCollect(`创建了${typeText}：` + text);
+        this.content += `- ${typeText}: ${escapeSpecialChars(text)}` + lineSysbol;
+    }
     // 创建参数表格
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};
         if(docs) {
             for(const item of docs['@param'] || []) {
-                doc[item[0]] = item.slice(1, item.length).join('').replace(/[- ]+/g, '');
+                doc[item[0]] = item.slice(1, item.length).join(' ').replace(/^[- ]+/g, '');
             }
         }
+        log.logCollect('创建了一个参数表格：' + JSON.stringify(params, null, 2), 'doc依赖：' + JSON.stringify(doc, null, 2));
         this.content += `#### params参数` + lineSysbol;
         if(!params || !params.length) {
             this.content += `无` + lineSysbol;
             return;
         }
-
         const props = [];
         for(const item of params) {
             props.push({
@@ -78,6 +101,7 @@ export class MdCreator {
             this.content += `无` + lineSysbol;
             return;
         }
+        log.logCollect('创建了一个类型表格：' + JSON.stringify(typeInfo, null, 2));
         const props = [];
         const typeShouldTable = typeInfo.type === 'type' && ['object', 'array'].includes(typeInfo.targetType);
         if(['interface', 'enum'].includes(typeInfo.type) || typeShouldTable) {
