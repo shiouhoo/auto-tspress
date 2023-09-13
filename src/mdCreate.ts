@@ -1,6 +1,6 @@
 import { lineSysbol } from './global';
 import { Params, TypeItem, TypeValue } from './types';
-import { objectToString } from './utils/stringUtil';
+import { objectToString, escapeSpecialChars } from './utils/stringUtil';
 import { log } from './log';
 
 export class MdCreator {
@@ -39,7 +39,7 @@ export class MdCreator {
     createText(text: string) {
         if(!text) return;
         log.logCollect('创建了一段文本：' + text);
-        this.content += text + '<br />' + lineSysbol;
+        this.content += escapeSpecialChars(text) + '<br />' + lineSysbol;
     }
     // 创建ts代码块
     createTsCode(code: string) {
@@ -52,14 +52,20 @@ export class MdCreator {
         log.logCollect('创建了一个文件说明：' + JSON.stringify(doc, null, 2));
         if(!doc) return;
         if(doc['@description']) {
-            this.content += `- 描述：${doc['@description']}` + lineSysbol;
+            this.content += `- 描述：${escapeSpecialChars(doc['@description'])}` + lineSysbol;
         }
         if(doc['@author']) {
-            this.content += `- 作者：${doc['@author']}` + lineSysbol;
+            this.content += `- 作者：${escapeSpecialChars(doc['@author'])}` + lineSysbol;
         }
         if(doc['@date']) {
-            this.content += `- 更新日期：${doc['@date']}` + lineSysbol;
+            this.content += `- 更新日期：${escapeSpecialChars(doc['@date'])}` + lineSysbol;
         }
+    }
+    // 创建返回类型
+    createReturns(text: string, type: 'type' | 'describe') {
+        const typeText = type === 'type' ? '返回类型' : '描述';
+        log.logCollect(`创建了${typeText}：` + text);
+        this.content += `- ${typeText}: ${escapeSpecialChars(text)}` + lineSysbol;
     }
     // 创建参数表格
     createParamsTable(params: Params, docs: Record<string, string[][]>) {
@@ -75,7 +81,6 @@ export class MdCreator {
             this.content += `无` + lineSysbol;
             return;
         }
-
         const props = [];
         for(const item of params) {
             props.push({

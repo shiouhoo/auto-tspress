@@ -32,3 +32,7 @@ export const splitFirstChar = (str:string, char: string, returnArr = false) => {
     }
     return returnArr ? [str] : str;
 };
+
+export const escapeSpecialChars = (text:string) => {
+    return text.replace(/([\\`*_{}[\]()<>#+.!-])/g, '\\$1');
+};

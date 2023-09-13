@@ -125,8 +125,8 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
             mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
             mdCreator.createParamsTable(func.params, func.docs);
             mdCreator.createTitle(4, '返回值', false);
-            mdCreator.createText('- 返回类型: ' + (func.returns?.type || 'void'));
-            mdCreator.createText('- 描述: ' + (func.docs?.['@returns']?.[0]?.[0] || '暂无'));
+            mdCreator.createReturns(func.returns?.type || 'void', 'type');
+            mdCreator.createReturns(func.docs?.['@returns']?.[0]?.[0] || '暂无', 'describe');
         }
     }
     // type
