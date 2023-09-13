@@ -1,6 +1,7 @@
 import { lineSysbol } from './global';
 import { Params, TypeItem, TypeValue } from './types';
 import { objectToString } from './utils/stringUtil';
+import { log } from './log';
 
 export class MdCreator {
     header: string;
@@ -29,13 +30,15 @@ export class MdCreator {
         this.setup += str + lineSysbol;
     }
     // 创建标题
-    createTitle(level:1|2|3|4|5|6, title:string) {
+    createTitle(level:1|2|3|4|5|6, title:string, isLog = true) {
         if(!title) return;
+        isLog && log.logCollect('创建了一个标题：' + title);
         this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
     // 创建函数说明
     createText(text: string) {
         if(!text) return;
+        log.logCollect('创建了一段文本：' + text);
         this.content += text + '<br />' + lineSysbol;
     }
     // 创建ts代码块
@@ -46,6 +49,7 @@ export class MdCreator {
     }
     // 创建文件说明
     createFileDoc(doc: Record<string, string>) {
+        log.logCollect('创建了一个文件说明：' + JSON.stringify(doc, null, 2));
         if(!doc) return;
         if(doc['@description']) {
             this.content += `- 描述：${doc['@description']}` + lineSysbol;
@@ -54,7 +58,6 @@ export class MdCreator {
             this.content += `- 作者：${doc['@author']}` + lineSysbol;
         }
         if(doc['@date']) {
-
             this.content += `- 更新日期：${doc['@date']}` + lineSysbol;
         }
     }
@@ -66,6 +69,7 @@ export class MdCreator {
                 doc[item[0]] = item.slice(1, item.length).join('').replace(/[- ]+/g, '');
             }
         }
+        log.logCollect('创建了一个参数表格：' + JSON.stringify(params, null, 2), 'doc依赖：' + JSON.stringify(doc, null, 2));
         this.content += `#### params参数` + lineSysbol;
         if(!params || !params.length) {
             this.content += `无` + lineSysbol;
@@ -92,6 +96,7 @@ export class MdCreator {
             this.content += `无` + lineSysbol;
             return;
         }
+        log.logCollect('创建了一个类型表格：' + JSON.stringify(typeInfo, null, 2));
         const props = [];
         const typeShouldTable = typeInfo.type === 'type' && ['object', 'array'].includes(typeInfo.targetType);
         if(['interface', 'enum'].includes(typeInfo.type) || typeShouldTable) {

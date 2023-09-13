@@ -12,7 +12,9 @@ export const __dirnameNew = path.dirname(__filenameNew);
 
 export const setting = {
     'dir': '',
-    '@': 'src'
+    '@': 'src',
+    'isPrintCollect': false,
+    'port': 5073
 };
 
 // 根据系统返回对应文件系统的换行符
