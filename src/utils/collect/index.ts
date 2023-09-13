@@ -1,8 +1,9 @@
-import { CollectMap, UseTypes } from './../../types/index';
+import { CollectMap, UseTypes } from '@/types';
 import { Project } from 'ts-morph';
 import { collectFileDoc } from './collectDoc';
 import { collectFunctions } from './collectFunc';
 import { collectTypes } from './collectTypes';
+import { setReturnSymbol } from '@/global';
 
 let useTypes: UseTypes;
 
@@ -26,6 +27,7 @@ export function collect(paths) {
 
     for (const sourceFile of sourceFiles) {
         if(sourceFile.getBaseName().endsWith('.d.ts')) continue;
+        setReturnSymbol(sourceFile.getText());
         // 搜集hooks用到过的接口类型
         useTypes = {
             util: new Set<string>(),
