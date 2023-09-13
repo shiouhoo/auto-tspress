@@ -1,6 +1,6 @@
-import { lineSysbol } from '../global';
-import { Params, TypeItem, TypeValue } from '../types';
-import { objectToString } from './typeAction';
+import { lineSysbol } from './global';
+import { Params, TypeItem, TypeValue } from './types';
+import { objectToString } from './utils/stringUtil';
 
 export class MdCreator {
     header: string;

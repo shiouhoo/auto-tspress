@@ -1,8 +1,8 @@
-import { command } from './utils/command';
-import { collect } from './utils/collect';
-import { createDocs } from './utils/docs';
-import { CollectMap } from './types';
-import { setting } from './global';
+import { command } from './src/command';
+import { collect } from './src/utils/collect';
+import { createDocs } from './src/docs';
+import { CollectMap } from './src/types';
+import { setting } from './src/global';
 import fs from 'fs';
 import path from 'path';
 
