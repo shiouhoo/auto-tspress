@@ -27,9 +27,9 @@ export const getParamsListByVarible = (declaration: VariableStatement | Function
         } else {
             currentArg += char;
 
-            if (char === '<') {
+            if (char === '<' || char === '{') {
                 bracketLevel++;
-            } else if (char === '>') {
+            } else if (char === '>' || char === '}') {
                 bracketLevel--;
             }
         }

@@ -43,7 +43,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         for (const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
             if ([...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) {
-                const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false);
+                const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false, moduleSpecifier);
                 if (useTypes.hooks.has(name)) {
                     fileImportsHooks[name] = t;
                     // useTypes.hooks.delete(name);
@@ -151,35 +151,17 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
 
 };
 
-// 收集文件中的类型,键值为类型名
-export const collectTypes = (sourceFile: SourceFile, useTypes: UseTypes): {
-    globalType: Record<string, TypeItem>,
-    fileType: Record<string, Record<string, TypeItem>>
-} => {
-    const { fileUtilTypes, fileHooksTypes, globalTypes } = collectTypeInFile(sourceFile, useTypes);
-    const {
-        fileImportsHooks,
-        fileImportsUtil
-    } = collectImportTypes(sourceFile, useTypes);
-    const fileType = {
-        hooks: {
-            ...fileHooksTypes,
-            ...fileImportsHooks
-        },
-        util: {
-            ...fileUtilTypes,
-            ...fileImportsUtil
-        }
-    };
-    return {
-        globalType: Object.keys(globalTypes).length ? globalTypes : null,
-        fileType,
-    };
-};
-
 /** 通过文件以及变量名获取导出的类型信息 */
-export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault = false): TypeItem=> {
-
+const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault = false, moduleName?:string): TypeItem=> {
+    // 第三方库
+    if(sourceFile.getFilePath().includes('node_modules')) {
+        return {
+            type: '未知',
+            value: '',
+            docs: null,
+            moduleName,
+        };
+    }
     if(isDefault) {
         // 找到默认导出的类型名，然后使用调用自身找出类型信息
         const defaultExport = sourceFile.getDefaultExportSymbol();
@@ -231,4 +213,30 @@ export const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, is
             throw new Error(`${sourceFile.getFilePath()}没有导出${name}`);
         }
     }
+};
+
+// 收集文件中的类型,键值为类型名
+export const collectTypes = (sourceFile: SourceFile, useTypes: UseTypes): {
+    globalType: Record<string, TypeItem>,
+    fileType: Record<string, Record<string, TypeItem>>
+} => {
+    const { fileUtilTypes, fileHooksTypes, globalTypes } = collectTypeInFile(sourceFile, useTypes);
+    const {
+        fileImportsHooks,
+        fileImportsUtil
+    } = collectImportTypes(sourceFile, useTypes);
+    const fileType = {
+        hooks: {
+            ...fileHooksTypes,
+            ...fileImportsHooks
+        },
+        util: {
+            ...fileUtilTypes,
+            ...fileImportsUtil
+        }
+    };
+    return {
+        globalType: Object.keys(globalTypes).length ? globalTypes : null,
+        fileType,
+    };
 };

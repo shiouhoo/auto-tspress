@@ -39,9 +39,10 @@ export interface TypeValue {
 export interface TypeItem {
     type: 'interface' | 'type' | 'enum' | 'any' | '未知'
     value: TypeValue | string,
+    docs: Record<string, string[][]>
     /** 针对type */
     targetType?: 'object' | 'array' | 'string' | 'Record'
-    docs: Record<string, string[][]>
+    moduleName?: string
 }
 /** 一个文件的收集容器对象 */
 export type FileMap = {

@@ -116,6 +116,7 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
     mdCreator.createTitle(1, fileName);
     mdCreator.createFileDoc(funcs.fileDoc);
     if(itemType === 'utils' || itemType === 'hooks') {
+
         // 函数
         mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数', false);
         // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
@@ -146,8 +147,12 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
             mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
             if(type.targetType === 'Record') {
                 const key = Object.keys(type.value)[0];
-                mdCreator.createText(`- 类型: Record`);
+                mdCreator.createText('Record', '类型');
                 mdCreator.createTsCode(`Record<${key},${(<string>type.value[key].value)}>`);
+            }else if(type.type === '未知') {
+                if(type.moduleName) {
+                    mdCreator.createText(type.moduleName, '包名');
+                }
             }else{
                 mdCreator.createTypesTable(type);
             }

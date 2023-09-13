@@ -7,7 +7,7 @@
     "lint": "eslint --ext .ts .",
     "build": "rollup -c",
     "r": "node ./lib/index",
-    "dev": "rollup  --config rollup.dev.config.js && node ./lib/index",
+    "dev": "rollup --config rollup.dev.config.js && node ./lib/index",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

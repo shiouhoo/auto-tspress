@@ -35,10 +35,13 @@ export class MdCreator {
         isLog && log.logCollect('创建了一个标题：' + title);
         this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
-    // 创建函数说明
-    createText(text: string) {
+    // 创建文本
+    createText(text: string, tag?: string) {
         if(!text) return;
         log.logCollect('创建了一段文本：' + text);
+        if(tag) {
+            this.content += `- ${tag}: `;
+        }
         this.content += escapeSpecialChars(text) + '<br />' + lineSysbol;
     }
     // 创建ts代码块
@@ -86,7 +89,7 @@ export class MdCreator {
             props.push({
                 name: item.name,
                 describe: doc[item.name] || '-',
-                type: item.type,
+                type: item.type || 'any',
                 isRequire: item.isRequire,
                 defaultValue: !item.isRequire ? item.defaultValue : '-'
             });
