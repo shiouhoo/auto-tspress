@@ -25,12 +25,12 @@ export const objectToString = (obj) => {
         return JSON.stringify(obj);
     }
 };
-export const splitFirstChar = (str:string, char: string, returnArr = false) => {
+export const splitFirstChar = (str:string, char: string) => {
     const index = str.indexOf(char);
     if(index !== -1) {
         return [str.slice(0, index).trim(), str.slice(index + 1).trim()];
     }
-    return returnArr ? [str] : str;
+    return [str];
 };
 
 export const escapeSpecialChars = (text:string) => {

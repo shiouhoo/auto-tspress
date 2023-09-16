@@ -202,10 +202,12 @@ const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault
                     value: getDetailByExport(namedExport) || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
-            }if(exportText.includes('type')) {
+            }else if(exportText.includes('type')) {
+                const [typeObject, targetType] = getDetailTypeByString(exportText.split('=')[1]?.replace(';', '')?.trim());
                 return {
                     type: 'type',
-                    value: exportText.split('=')[1]?.replace(';', '')?.trim(),
+                    value: typeObject,
+                    targetType,
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else{

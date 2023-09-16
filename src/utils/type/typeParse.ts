@@ -3,6 +3,7 @@ import { cliPath, lineSysbol } from '@/global';
 import { collectDoc } from '../collect/collectDoc';
 import { InterfaceDeclaration, EnumDeclaration } from 'ts-morph';
 import path from 'path';
+import { splitFirstChar } from '../stringUtil';
 
 /** 通过字符串获取类型 */
 export const getTypeByText = (str: string, isDefault): string => {
@@ -84,15 +85,22 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
     for(const pair of keyValuePairs || []) {
         let [comment, keyValue] = ['', ''];
         if(pair.includes('/**') || pair.includes('//')) {
-            [comment, keyValue] = pair.split(lineSysbol);
+            // 分割注释和键值对
+            const list = pair.split(lineSysbol);
+            if(list.length > 2) {
+                comment = list[1];
+                keyValue = list[3];
+            }else{
+                [comment, keyValue] = list;
+            }
         }else{
             keyValue = pair;
         }
-        const [key, value] = keyValue.split(':').map(str => str.replace(/,\s*$/, '').trim());
+        const [key, value] = splitFirstChar(keyValue, ':').map(str => str.replace(/,\s*$/, '').trim());
         typeObject[key] = {
             value: value,
             doc: comment && {
-                comment: [[comment.replaceAll('*', '').replaceAll('/', '').trim() || '']]
+                comment: [[comment.replace(/^\s*\**(.*?)\**\s*$/g, '$1').trim() || '']]
             }
         };
     }

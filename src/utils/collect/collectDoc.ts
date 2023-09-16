@@ -9,11 +9,11 @@ export function collectDoc(doc: JSDoc) {
         comment: [[doc.getComment() as string || '']]
     };
     for (const jsDocTag of doc.getTags()) {
-        const [tagName, rest] = splitFirstChar(jsDocTag.getText().replaceAll('*', ''), ' ', true);
+        const [tagName, rest] = splitFirstChar(jsDocTag.getText().replaceAll('*', ''), ' ');
         if (docMap[tagName]) {
-            docMap[tagName].push(splitFirstChar(rest, ' ', true) as string[]);
+            docMap[tagName].push(splitFirstChar(rest, ' '));
         } else {
-            docMap[tagName] = [splitFirstChar(rest, ' ', true) as string[]];
+            docMap[tagName] = [splitFirstChar(rest, ' ')];
         }
     }
     return Object.keys(docMap).length ? docMap : null;
