@@ -19,8 +19,6 @@ export function collect(paths) {
     // 创建一个项目实例
     const project = new Project();
 
-    const typeChecker = project.getTypeChecker();
-
     // 添加要分析的文件
     project.addSourceFilesAtPaths(paths.split(' '));
     const sourceFiles = project.getSourceFiles();
@@ -34,7 +32,7 @@ export function collect(paths) {
             hooks: new Set<string>(),
         };
         const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
-        const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { typeChecker, useTypes });
+        const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { useTypes });
         const { globalType, fileType } = collectTypes(sourceFile, useTypes);
         // hooks
         if(hooksDeclarationMap) {

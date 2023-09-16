@@ -4,13 +4,8 @@ import { Params } from '@/types';
 import { getTypeByText, isBaseType } from '../type/typeParse';
 import { splitFirstChar } from '../stringUtil';
 
-// 获取function参数列表
-export const getParamsList = (declaration: FunctionDeclaration, useTypes: Set<string>) => {
-    return getParamsListByVarible(declaration, useTypes);
-};
-
-// 获取箭头函数参数列表
-export const getParamsListByVarible = (declaration: VariableStatement | FunctionDeclaration, useTypes: Set<string>) => {
+// 获取函数参数列表
+export const getParamsList = (declaration: VariableStatement | FunctionDeclaration, useTypes: Set<string>) => {
     const params: Params = [];
     const headerText: string = declaration.getText().split(lineSysbol)[0];
     const paramsList: string[] = [];

@@ -1,7 +1,7 @@
-import { VariableStatement, FunctionDeclaration, SourceFile, TypeChecker } from 'ts-morph';
+import { VariableStatement, FunctionDeclaration, SourceFile } from 'ts-morph';
 import { FunctionMap, Params, Returns, UseTypes } from '@/types';
-import { getParamsListByVarible, getParamsList } from './collectParams';
-import { getReturns, getReturnsByVarible } from './collectReturns';
+import { getParamsList } from './collectParams';
+import { getReturns } from './collectReturns';
 import { collectDoc } from './collectDoc';
 import { varibleIsFunction } from '../functionUtil';
 
@@ -30,72 +30,69 @@ function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, hooksDec
     return [functionDeclarationMap, hooksDeclarationMap];
 }
 
-// 处理箭头函数
-function collectVaribleFunc(variable: VariableStatement, ishooks: boolean, useTypes:UseTypes) {
+/** 获取函数参数和返回值 */
+function collectVaribleFunc(variable: VariableStatement | FunctionDeclaration, ishooks: boolean, useTypes:UseTypes) {
     if (!variable.isExported()) return null;
     // 判断是否是函数
-    if (!varibleIsFunction(variable)) {
+    if (variable instanceof VariableStatement && !varibleIsFunction(variable)) {
         return {};
     }
     // 获取参数和返回值
-    const params: Params = getParamsListByVarible(variable, ishooks ? useTypes.hooks : useTypes.util);
-    const returns: Returns = getReturnsByVarible(variable, ishooks ? useTypes.hooks : useTypes.util);
-    return {
-        params,
-        returns
-    };
-}
-// 处理function关键字定义的函数
-function collectFunctionDeclaration(variable: FunctionDeclaration, ishooks: boolean, { typeChecker, useTypes } :{useTypes:UseTypes, typeChecker:TypeChecker}) {
-    if (!variable.isExported()) return null;
-
-    // 获取参数和返回值
     const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util);
-    const returns: Returns = getReturns(variable, { typeChecker }, ishooks ? useTypes.hooks : useTypes.util);
-
+    const returns: Returns = getReturns(variable, ishooks ? useTypes.hooks : useTypes.util);
     return {
         params,
         returns
     };
 }
+
 // 收集函数
-export function collectFunctions(sourceFile: SourceFile, { typeChecker, useTypes } :{useTypes:UseTypes, typeChecker:TypeChecker}): {
+export function collectFunctions(sourceFile: SourceFile, { useTypes } :{useTypes:UseTypes}): {
     functionDeclarationMap: FunctionMap, hooksDeclarationMap: FunctionMap
 } {
+    // 用于记录文件中的函数名，匹配默认导出的声明类型
+    const funcNames = {};
     let functionDeclarationMap: FunctionMap = null;
     let hooksDeclarationMap: FunctionMap = null;
     // 获取文件中的变量，判断箭头函数
     const variableStatements = sourceFile.getVariableStatements();
-    for (const varible of variableStatements) {
-        const varibleName = varible.getDeclarationList().getDeclarations()[0].getName();
-        // 获取参数和返回值
-        const paramsAndReturns = collectVaribleFunc(varible, varibleName.startsWith('use'), useTypes);
-        if(!paramsAndReturns) continue;
-        const { params, returns } = paramsAndReturns;
-        const docMap = collectDoc(varible.getJsDocs()[0]);
-        [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, varibleName);
-    }
     // 获取文件中的函数
     const functions = sourceFile.getFunctions();
-    for (const functionDeclaration of functions) {
-        const funcName = functionDeclaration.getName();
-        if (funcName === undefined) break;
-        // 获取参数和返回值
-        const paramsAndReturns = collectFunctionDeclaration(functionDeclaration, funcName.startsWith('use'), { typeChecker, useTypes });
-        if(!paramsAndReturns) continue;
-        const { params, returns } = paramsAndReturns;
-        const docMap = collectDoc(functionDeclaration.getJsDocs()[0]);
-        [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, funcName);
+    // 记录是否默认导出函数
+    let isDefaultExport:boolean;
+    for (const funcs of [variableStatements, functions]) {
+        for(const func of funcs) {
+            let varibleName = '';
+            if(func instanceof VariableStatement) {
+                varibleName = func.getDeclarationList().getDeclarations()[0].getName();
+            }else{
+                varibleName = func.getName();
+            }
+            funcNames[varibleName] = func;
+            isDefaultExport = func.isDefaultExport();
+            // 获取参数和返回值
+            const paramsAndReturns = collectVaribleFunc(func, varibleName.startsWith('use'), useTypes);
+            if(!paramsAndReturns) continue;
+            const { params, returns } = paramsAndReturns;
+            const docMap = collectDoc(func.getJsDocs()[0]);
+            [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, isDefaultExport ? `${varibleName}(默认导出)` : varibleName);
+        }
     }
     // 默认导出
     const defaultExport = sourceFile.getDefaultExportSymbol();
-    if (defaultExport) {
-        const defaultDeclaraation:any = defaultExport.getDeclarations()[0];
+    if (defaultExport && !isDefaultExport) {
+        let defaultDeclaraation = defaultExport.getDeclarations()[0] as FunctionDeclaration;
+        // 文件是否为hooks
         const ishooks = sourceFile.getBaseName().startsWith('use');
-        if (varibleIsFunction(defaultDeclaraation.getText())) {
+        const defaultName = defaultDeclaraation.getText().match(/export\s*default(.*?);?$/)?.[1]?.trim();
+        const isFunc = varibleIsFunction(defaultDeclaraation.getText());
+        if (isFunc || Object.keys(funcNames).includes(defaultName)) {
+            if(!isFunc) {
+                defaultDeclaraation = funcNames[defaultName];
+            }
             // 获取参数和返回值
-            const params: Params = getParamsListByVarible(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
-            const returns: Returns = getReturnsByVarible(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
+            const params: Params = getParamsList(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
+            const returns: Returns = getReturns(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
             const docMap = collectDoc(defaultDeclaraation.getJsDocs()[0]);
             [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, (ishooks ? sourceFile.getBaseName() : 'default') + '(默认导出)');
         }

@@ -18,6 +18,9 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         // 被导入模块名
         const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
         let moduleSpecifierSourceFile = importDeclaration.getModuleSpecifierSourceFile();
+        if(!moduleSpecifierSourceFile) {
+            throw new Error(`在文件${sourceFile.getBaseName()}中，没有找到导入的${moduleSpecifier}模块`);
+        }
         // 检查是否以@开头
         if (moduleSpecifier.startsWith('@')) {
             // 将@替换为实际路径
@@ -171,6 +174,9 @@ const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault
         // 格式为 import("C:/Users/29729/XX").XX
         const defaultExportType = defaultExport.getDeclaredType().getText();
         const realName = defaultExportType.replace(/import(.*?)[.]/, '').trim();
+        if(realName === 'any') {
+            throw new Error(`${sourceFile.getFilePath()}默认变量不存在`);
+        }
         return gettypeInfosByExportName(sourceFile, realName, false);
     }else{
         const exportedDeclarations = sourceFile.getExportedDeclarations();
