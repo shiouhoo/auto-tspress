@@ -71,7 +71,7 @@ export class MdCreator {
         this.content += `- ${typeText}: ${escapeSpecialChars(text)}` + lineSysbol;
     }
     // 创建参数表格
-    createParamsTable(params: Params, docs: Record<string, string[][]>) {
+    createParamsTable(params: Params, docs: Record<string, string[][]>, useTypesFileMap:Record<string, string>) {
         const doc = {};
         if(docs) {
             for(const item of docs['@param'] || []) {
@@ -91,7 +91,8 @@ export class MdCreator {
                 describe: doc[item.name] || '-',
                 type: item.type || 'any',
                 isRequire: item.isRequire,
-                defaultValue: !item.isRequire ? item.defaultValue : '-'
+                defaultValue: !item.isRequire ? item.defaultValue : '-',
+                typeTarget: useTypesFileMap[item.type]
             });
         }
         this.createSetup(`const tableData${this.index}=${objectToString(props)}`);

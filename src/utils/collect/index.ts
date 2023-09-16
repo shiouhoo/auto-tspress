@@ -30,16 +30,18 @@ export function collect(paths) {
         useTypes = {
             util: new Set<string>(),
             hooks: new Set<string>(),
+            typeToFileMap: {}
         };
         const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { useTypes });
-        const { globalType, fileType } = collectTypes(sourceFile, useTypes);
+        const { globalTargetTypes, globalFileTypes, fileType } = collectTypes(sourceFile, useTypes);
         // hooks
         if(hooksDeclarationMap) {
             collectMap.hooks[sourceFile.getBaseName()] = {
                 value: hooksDeclarationMap,
                 types: Object.keys(fileType.hooks).length ? fileType.hooks : null,
-                fileDoc: fileDocMap
+                fileDoc: fileDocMap,
+                useTypesFileMap: useTypes.typeToFileMap,
             };
         }
         // utils
@@ -47,12 +49,21 @@ export function collect(paths) {
             collectMap.utils[sourceFile.getBaseName()] = {
                 value: functionDeclarationMap,
                 types: Object.keys(fileType.util).length ? fileType.util : null,
-                fileDoc: fileDocMap
+                fileDoc: fileDocMap,
+                useTypesFileMap: useTypes.typeToFileMap,
             };
         }
         // globalTypes
-        if(globalType) {
-            collectMap.globalTypes[sourceFile.getBaseName()] = globalType;
+        if(globalFileTypes) {
+            collectMap.globalTypes[sourceFile.getBaseName()] = globalFileTypes;
+        }
+        if(globalTargetTypes) {
+            for(const fileName in globalTargetTypes) {
+                collectMap.globalTypes[fileName] = {
+                    ...collectMap.globalTypes[fileName],
+                    ...globalTargetTypes[fileName]
+                };
+            }
         }
     }
     return collectMap;

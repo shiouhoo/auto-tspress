@@ -69,7 +69,6 @@ export const getParamsList = (declaration: VariableStatement | FunctionDeclarati
         if(!isBase && type) {
             useTypes.add(type.trim());
         }
-
     }
     return params;
 };

@@ -124,7 +124,7 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
             const func = funcs.value[funcName];
             mdCreator.createTitle(3, funcName);
             mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
-            mdCreator.createParamsTable(func.params, func.docs);
+            mdCreator.createParamsTable(func.params, func.docs, funcs.useTypesFileMap);
             mdCreator.createTitle(4, '返回值', false);
             mdCreator.createReturns(func.returns?.type || 'void', 'type');
             mdCreator.createReturns(func.docs?.['@returns']?.[0]?.[0] || '暂无', 'describe');

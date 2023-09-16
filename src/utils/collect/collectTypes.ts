@@ -4,12 +4,13 @@ import { setting } from '@/global';
 import { collectDoc } from './collectDoc';
 import { getDetailTypeByString, parseTypeImport, getDetailByExport } from '../type/typeParse';
 
+const collectedFile:{[key: string]: Record<string, TypeItem>} = {};
+
 // 收集import导入的类型
 const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
 
     // 保存对应的属性列表
-    const fileImportsUtil: Record<string, TypeItem> = {};
-    const fileImportsHooks: Record<string, TypeItem> = {};
+    const globalFileTypes: Record<string, Record<string, TypeItem>> = {};
 
     const importDeclarations = sourceFile.getImportDeclarations();
     for (const importDeclaration of importDeclarations) {
@@ -28,33 +29,50 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
             moduleSpecifierSourceFile ||= new Project().getSourceFile(actualPath);
         }
         if(!moduleSpecifierSourceFile) continue;
+
+        // 之前已经搜集过该文件的类型
+        if(collectedFile[moduleSpecifierSourceFile.getFilePath()]) {
+            const map = collectedFile[moduleSpecifierSourceFile.getFilePath()];
+            for(const item of [...useTypes.hooks, ...useTypes.util]) {
+                const typeName = item.includes('.') ? item.split('.')[1] : item;
+                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                    [typeName]: map[typeName]
+                };
+                useTypes.typeToFileMap[typeName] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html')}#${typeName}`;
+            }
+            continue;
+        }
+
         // 默认导入
         /** 默认导入的名称 */
         const name = importDeclaration.getImportClause()?.getSymbol()?.getEscapedName();
+        const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
+        collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
+            ...collectedFile[sourceFile.getFilePath()],
+            [name]: t
+        };
         if (name && [...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
-            const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
-            if (useTypes.hooks.has(name)) {
-                fileImportsHooks[name] = t;
-                // useTypes.hooks.delete(name);
-            }
-            if (useTypes.util.has(name)) {
-                fileImportsUtil[name] = t;
-                // useTypes.util.delete(name);
-            }
+            globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                [name]: t
+            };
+            useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html')}#${name}`;
         }
         // 具名导入
         for (const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
+            const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false, moduleSpecifier);
+            collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
+                ...collectedFile[sourceFile.getFilePath()],
+                [name]: t
+            };
             if ([...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) {
-                const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false, moduleSpecifier);
-                if (useTypes.hooks.has(name)) {
-                    fileImportsHooks[name] = t;
-                    // useTypes.hooks.delete(name);
-                }
-                if (useTypes.util.has(name)) {
-                    fileImportsUtil[name] = t;
-                    // useTypes.util.delete(name);
-                }
+                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                    [name]: t
+                };
+                useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html')}#${name}`;
             }
         }
         // import * as 方式
@@ -63,27 +81,29 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
             // 获取别名的名称
             const aliasName = importText.match(/^\*\s+as\s+(\w+)/)[1];
             for(const item of [...useTypes.hooks, ...useTypes.util]) {
-                if(!item.includes(`${aliasName}.`)) continue;
                 const typeName = item.split('.')[1];
                 const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), typeName, false);
-                if (useTypes.hooks.has(item)) {
-                    fileImportsHooks[typeName] = t;
-                }
-                if (useTypes.util.has(item)) {
-                    fileImportsUtil[typeName] = t;
+                collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
+                    ...collectedFile[sourceFile.getFilePath()],
+                    [typeName]: t
+                };
+                if(item.includes(`${aliasName}.`)) {
+                    globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                        ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                        [name]: t
+                    };
+                    useTypes.typeToFileMap[typeName] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html')}#${name}`;
                 }
             }
         }
+        collectedFile[name] = globalFileTypes[moduleSpecifierSourceFile.getBaseName()];
     }
 
-    return {
-        fileImportsHooks,
-        fileImportsUtil
-    };
+    return globalFileTypes;
 };
 // 收集文件中的interface，type，enum
 const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
-    const globalTypes: Record<string, TypeItem> = {};
+    const globalFileTypes: Record<string, TypeItem> = {};
     const fileHooksTypes: Record<string, TypeItem> = {};
     const fileUtilTypes: Record<string, TypeItem> = {};
     for (const type of ['type', 'interface', 'enum']) {
@@ -135,19 +155,22 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 docs: collectDoc(object.getJsDocs()[0])
             };
             if (object.isExported()) {
-                globalTypes[name] = tmp;
-            }
-            if (useTypes.hooks.has(name)) {
-                fileHooksTypes[name] = tmp;
-            }
-            if (useTypes.util.has(name)) {
-                fileUtilTypes[name] = tmp;
+                globalFileTypes[name] = tmp;
+            }else{
+                if (useTypes.hooks.has(name)) {
+                    fileHooksTypes[name] = tmp;
+                    useTypes.typeToFileMap[name] = `./#${name}`;
+                }
+                if (useTypes.util.has(name)) {
+                    fileUtilTypes[name] = tmp;
+                    useTypes.typeToFileMap[name] = `./#${name}`;
+                }
             }
         }
     }
 
     return {
-        globalTypes,
+        globalFileTypes,
         fileHooksTypes,
         fileUtilTypes
     };
@@ -223,28 +246,33 @@ const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault
     }
 };
 
-// 收集文件中的类型,键值为类型名
+/**
+ * @param sourceFile
+ * @param useTypes
+ * @returns {
+ *      globalFileTypes : 该文件的全局类型
+ *      globalTargetTypes : 该文件import的文件的全局类型
+ *      fileType : 该文件的局部类型
+ * }
+ */
 export const collectTypes = (sourceFile: SourceFile, useTypes: UseTypes): {
-    globalType: Record<string, TypeItem>,
+    globalFileTypes: Record<string, TypeItem>,
+    globalTargetTypes: Record<string, Record<string, TypeItem>>
     fileType: Record<string, Record<string, TypeItem>>
 } => {
-    const { fileUtilTypes, fileHooksTypes, globalTypes } = collectTypeInFile(sourceFile, useTypes);
-    const {
-        fileImportsHooks,
-        fileImportsUtil
-    } = collectImportTypes(sourceFile, useTypes);
+    const { fileUtilTypes, fileHooksTypes, globalFileTypes } = collectTypeInFile(sourceFile, useTypes);
+    const globalTargetTypes = collectImportTypes(sourceFile, useTypes);
     const fileType = {
         hooks: {
             ...fileHooksTypes,
-            ...fileImportsHooks
         },
         util: {
             ...fileUtilTypes,
-            ...fileImportsUtil
         }
     };
     return {
-        globalType: Object.keys(globalTypes).length ? globalTypes : null,
+        globalTargetTypes: Object.keys(globalTargetTypes).length ? globalTargetTypes : null,
+        globalFileTypes: Object.keys(globalFileTypes).length ? globalFileTypes : null,
         fileType,
     };
 };

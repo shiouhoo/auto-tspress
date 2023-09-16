@@ -6,6 +6,7 @@ export type Params = {
     type: string
     isBase: boolean
     isRequire: boolean
+    typeTarget?: string
     defaultValue?: string
 }[]
 
@@ -48,7 +49,9 @@ export interface TypeItem {
 export type FileMap = {
     types: Record<string, TypeItem>,
     value: FunctionMap,
-    fileDoc: Record<string, string>
+    fileDoc: Record<string, string>,
+    /** 记录特殊类型的文档位置 */
+    useTypesFileMap: Record<string, string>
 }
 export interface CollectMap {
     /**
@@ -65,4 +68,5 @@ export interface CollectMap {
 export interface UseTypes{
     util: Set<string>,
     hooks: Set<string>,
+    typeToFileMap: Record<string, string>
 }

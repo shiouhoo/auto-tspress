@@ -59,7 +59,7 @@ export function collectFunctions(sourceFile: SourceFile, { useTypes } :{useTypes
     // 获取文件中的函数
     const functions = sourceFile.getFunctions();
     // 记录是否默认导出函数
-    let isDefaultExport:boolean;
+    let isDefaultExport:boolean = false;
     for (const funcs of [variableStatements, functions]) {
         for(const func of funcs) {
             let varibleName = '';
