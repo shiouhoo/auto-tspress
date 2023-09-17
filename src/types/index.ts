@@ -1,7 +1,6 @@
 /** 参数类型 */
 export type Params = {
     /** name */
-    // TODO 对象解析
     name: string
     type: string
     isBase: boolean
@@ -44,7 +43,8 @@ export interface TypeItem {
     docs: Record<string, string[][]>
     /** 针对type */
     targetType?: 'object' | 'array' | 'string' | 'Record'
-    moduleName?: string
+    moduleName?: string,
+    generics?: string[]
 }
 /** 一个文件的收集容器对象 */
 export type FileMap = {

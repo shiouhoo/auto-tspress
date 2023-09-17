@@ -3,6 +3,7 @@ import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params } from '@/types';
 import { getTypeByText, isBaseType } from '../type/typeParse';
 import { splitFirstChar } from '../stringUtil';
+import { getUseTypeByText } from '../type/typeParse';
 
 // 获取函数参数列表
 export const getParamsList = (declaration: VariableStatement | FunctionDeclaration, useTypes: Set<string>) => {
@@ -29,8 +30,8 @@ export const getParamsList = (declaration: VariableStatement | FunctionDeclarati
             }
         }
     }
-
     paramsList.push(currentArg.trim());
+
     /** 记录是否import * as */
     let isAsImport = false;
     for(let p of paramsList) {
@@ -67,7 +68,9 @@ export const getParamsList = (declaration: VariableStatement | FunctionDeclarati
             defaultValue
         });
         if(!isBase && type) {
-            useTypes.add(type.trim());
+            for(const t of getUseTypeByText(type)) {
+                useTypes.add(t);
+            }
         }
     }
     return params;
