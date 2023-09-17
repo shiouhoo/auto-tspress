@@ -33,7 +33,8 @@ export interface TypeValue {
      */
     [key: string]: {
         value: string,
-        doc: Record<string, string[][]>
+        isRequire: boolean
+        doc: Record<string, string[][]>,
     }
 }
 

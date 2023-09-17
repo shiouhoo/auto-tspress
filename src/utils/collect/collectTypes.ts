@@ -2,7 +2,8 @@ import { SourceFile, Project, EnumDeclaration, TypeAliasDeclaration, InterfaceDe
 import { UseTypes, TypeItem, TypeValue } from '@/types';
 import { setting } from '@/global';
 import { collectDoc } from './collectDoc';
-import { getDetailTypeByString, parseTypeImport, getDetailByExport } from '../type/typeParse';
+import { getDetailTypeByString, getMembersToTypeValue } from '../type/typeParse';
+import { lineSysbol } from '@/global';
 
 const collectedFile:{[key: string]: Record<string, TypeItem>} = {};
 
@@ -118,35 +119,25 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
         for (const object of objects) {
             let targetType: 'object' | 'array' | 'string' = 'object';
             const name: string = object.getName();
-            if (!object.isExported() && ![...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) break;
+            if (!object.isExported() && ![...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) continue;
             // 保存属性列表
             let typeObject: TypeValue | string = {};
             if (type === 'interface') {
                 // 获取接口的属性列表
-                const properties = (<InterfaceDeclaration>object).getProperties();
-                for (const property of properties) {
-                    typeObject[property.getName()] = {
-                        value: parseTypeImport(property.getType().getText(), sourceFile.getFilePath()),
-                        doc: collectDoc(property.getJsDocs()[0])
-                    };
-                }
+                typeObject = getMembersToTypeValue(<InterfaceDeclaration>object) || {};
                 // 获取索引签名
                 const indexSignature = (<InterfaceDeclaration>object).getIndexSignatures()[0];
                 if(indexSignature) {
                     typeObject[`[${indexSignature.getKeyName()} as ${indexSignature.getType().getText()}]`] = {
                         value: indexSignature.getReturnType().getText(),
+                        isRequire: false,
                         doc: collectDoc(indexSignature.getJsDocs()[0])
                     };
                 }
             } else if (type === 'type') {
                 [typeObject, targetType] = getDetailTypeByString(object.getText().split(/type.*?=/)[1]);
             } else if (type === 'enum') {
-                for (const item of (<EnumDeclaration>object).getMembers()) {
-                    typeObject[item.getName()] = {
-                        value: item.getValue() + '',
-                        doc: collectDoc(item.getJsDocs()[0])
-                    };
-                }
+                typeObject = getMembersToTypeValue(<EnumDeclaration>object);
             }
             const tmp: TypeItem = {
                 value: typeObject,
@@ -159,11 +150,11 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             }else{
                 if (useTypes.hooks.has(name)) {
                     fileHooksTypes[name] = tmp;
-                    useTypes.typeToFileMap[name] = `./#${name}`;
+                    useTypes.typeToFileMap[name] = `#${name}`;
                 }
                 if (useTypes.util.has(name)) {
                     fileUtilTypes[name] = tmp;
-                    useTypes.typeToFileMap[name] = `./#${name}`;
+                    useTypes.typeToFileMap[name] = `#${name}`;
                 }
             }
         }
@@ -216,13 +207,13 @@ const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault
             if(namedExport instanceof InterfaceDeclaration) {
                 return {
                     type: 'interface',
-                    value: getDetailByExport(namedExport) || '',
+                    value: getMembersToTypeValue(namedExport) || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else if(namedExport instanceof EnumDeclaration) {
                 return {
                     type: 'enum',
-                    value: getDetailByExport(namedExport) || '',
+                    value: getMembersToTypeValue(namedExport) || '',
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else if(exportText.includes('type')) {

@@ -114,7 +114,7 @@ export class MdCreator {
                     name: item,
                     describe: typeInfo.value[item].doc?.['@description']?.[0]?.[0] || typeInfo.value[item].doc?.['comment']?.[0]?.[0] || '-',
                     type: typeInfo.value[item].value,
-                    isRequire: '-',
+                    isRequire: typeInfo.value[item].isRequire,
                 });
             }
             this.createSetup(`const tableData${this.index}=${objectToString(props)}`);

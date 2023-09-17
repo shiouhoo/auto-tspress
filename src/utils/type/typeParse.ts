@@ -1,8 +1,7 @@
 import { TypeValue } from '@/types';
-import { cliPath, lineSysbol } from '@/global';
+import { lineSysbol } from '@/global';
 import { collectDoc } from '../collect/collectDoc';
 import { InterfaceDeclaration, EnumDeclaration } from 'ts-morph';
-import path from 'path';
 import { splitFirstChar } from '../stringUtil';
 
 /** 通过字符串获取类型 */
@@ -21,31 +20,20 @@ export const getTypeByText = (str: string, isDefault): string => {
     }
     return str;
 };
-/** 解析获取的类型为import() */
-export const parseTypeImport = (str: string, sourceFilePath:string) => {
-    if((str = str.trim()).includes('import(')) {
-        const match = str.match(/import\("(.*?)"\)[.](.+)/)?.map(str => str.trim());
-        if(!match) return str;
-        if(path.join(match[1]).toString() + '.ts' === path.join(sourceFilePath).toString()) {
-            return str.replace(`import("${match[1]}").`, '');
-        }else{
-            return str.replace(cliPath, '');
-        }
-    }
-    return str;
-};
+
 // 判断字符串是否为基本类型
 export const isBaseType = (str: string) => {
     return /^(?:string|number|boolean|undefined|null|symbol)\w?\[\]$/.test(str);
 };
 
 /** 将interface，enum的信息转为对象 */
-export const getDetailByExport = (namedExport:InterfaceDeclaration | EnumDeclaration): TypeValue=>{
+export const getMembersToTypeValue = (namedExport:InterfaceDeclaration | EnumDeclaration): TypeValue=>{
     const typeObject: TypeValue = {};
     if(namedExport instanceof InterfaceDeclaration) {
         for(const member of namedExport.getProperties()) {
             typeObject[member.getName()] = {
                 value: member.getTypeNode()?.getText(),
+                isRequire: !member.hasQuestionToken(),
                 doc: collectDoc(member.getJsDocs()[0])
             };
         }
@@ -53,6 +41,7 @@ export const getDetailByExport = (namedExport:InterfaceDeclaration | EnumDeclara
         for(const member of namedExport.getMembers()) {
             typeObject[member.getName()] = {
                 value: member.getValue() + '',
+                isRequire: true,
                 doc: collectDoc(member.getJsDocs()[0])
             };
         }
@@ -69,6 +58,7 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
         if(match) {
             typeObject[match[1]] = {
                 value: match[2],
+                isRequire: null,
                 doc: null
             };
         }
@@ -81,24 +71,38 @@ export const getDetailTypeByString = (str:string): [TypeValue | string, 'array'|
         return [str, 'string'];
     }
     // 配置doc和第二行的键值对
-    const keyValuePairs = str.match(/(\/\*\*([\s\S]*?)\*\/|\/\/(.*?))?\s*(\w+):\s*([^\n]+)\s*/g);
-    for(const pair of keyValuePairs || []) {
+    let bracketLevel = 0;
+    str = str.match(/\{([\s\S]*)\}/)[1].replaceAll('\r\n', '\n').trim();
+    for(let i = 0;i < str.length;i++) {
         let [comment, keyValue] = ['', ''];
-        if(pair.includes('/**') || pair.includes('//')) {
-            // 分割注释和键值对
-            const list = pair.split(lineSysbol);
-            if(list.length > 2) {
-                comment = list[1];
-                keyValue = list[3];
-            }else{
-                [comment, keyValue] = list;
-            }
-        }else{
-            keyValue = pair;
+        let char = str[i];
+        if(char === ' ') continue;
+        // 匹配注释
+        if(char === '/' && str[i + 1] === '*' && str[i + 2] === '*') {
+            const idx = str.indexOf('*/', i);
+            comment = str.slice(i + 3, idx).trim();
+            i = idx + 3;
+        }else if(char === '/' && str[i + 1] === '/') {
+            const idx = str.indexOf('\n', i);
+            comment = str.slice(i + 2, idx).trim();
+            i = idx + 2;
         }
-        const [key, value] = splitFirstChar(keyValue, ':').map(str => str.replace(/,\s*$/, '').trim());
-        typeObject[key] = {
+        // 匹配键值
+        do{
+            char = str[i];
+            keyValue += char;
+            if (char === '<' || char === '{') {
+                bracketLevel++;
+            } else if (char === '>' || char === '}') {
+                bracketLevel--;
+            }
+            i++;
+        }while(i < str.length && (char !== '\n' || bracketLevel !== 0));
+        const [key, value] = splitFirstChar(keyValue, ':').map(str => str.replace(/[,;]\s*$/, '').trim());
+        const isRequire = !key.includes('?');
+        typeObject[isRequire ? key : key.replace('?', '')] = {
             value: value,
+            isRequire,
             doc: comment && {
                 comment: [[comment.replace(/^\s*\**(.*?)\**\s*$/g, '$1').trim() || '']]
             }
