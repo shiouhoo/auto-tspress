@@ -44,6 +44,26 @@ export class MdCreator {
         }
         this.content += escapeSpecialChars(text) + '<br />' + lineSysbol;
     }
+    // 创建代码块
+    createDescText(text: string | string[], { tag, light = 'all', joinChar = ', ' }: { tag?: string, light?:boolean[] | 'all', joinChar?:string }) {
+        if(typeof text === 'string') {
+            text = [text];
+        }
+        if(tag) {
+            this.content += `- ${tag}: `;
+        }
+        for(let i = 0;i < text.length;i++) {
+            if(light === 'all' || (light && light[i])) {
+                this.content += `\`${escapeSpecialChars(text[i])}\``;
+            }else{
+                this.content += escapeSpecialChars(text[i]);
+            }
+            if(i !== text.length - 1) {
+                this.content += joinChar;
+            }
+        }
+        this.content += '<br />' + lineSysbol;
+    }
     // 创建ts代码块
     createTsCode(code: string) {
         this.content += '```ts' + lineSysbol;

@@ -145,9 +145,10 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
             }
             mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
             mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
+            type.generics && mdCreator.createDescText(type.generics, { tag: '泛型' });
             if(type.targetType === 'Record') {
                 const key = Object.keys(type.value)[0];
-                mdCreator.createText('Record', '类型');
+                mdCreator.createDescText('Record', { tag: '类型' });
                 mdCreator.createTsCode(`Record<${key},${(<string>type.value[key].value)}>`);
             }else if(type.type === '未知') {
                 if(type.moduleName) {

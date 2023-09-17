@@ -6,6 +6,11 @@ import { getDetailTypeByString, getMembersToTypeValue } from '../type/typeParse'
 
 const collectedFile:{[key: string]: Record<string, TypeItem>} = {};
 
+const getGenerics = (interfaceDeclaration: InterfaceDeclaration | TypeAliasDeclaration)=>{
+    const generics = interfaceDeclaration.getTypeParameters();
+    return generics.map(item => item.getText());
+};
+
 // 收集import导入的类型
 const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
 
@@ -47,18 +52,22 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         // 默认导入
         /** 默认导入的名称 */
         const name = importDeclaration.getImportClause()?.getSymbol()?.getEscapedName();
-        const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
-        collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
-            ...collectedFile[sourceFile.getFilePath()],
-            [name]: t
-        };
-        if (name && [...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
-            globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+        if(name) {
+
+            const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
+            collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
+                ...collectedFile[sourceFile.getFilePath()],
                 [name]: t
             };
-            useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
+            if([...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
+                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                    [name]: t
+                };
+                useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
+            }
         }
+
         // 具名导入
         for (const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
@@ -82,18 +91,18 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
             const aliasName = importText.match(/^\*\s+as\s+(\w+)/)[1];
             for(const item of [...useTypes.hooks, ...useTypes.util]) {
                 const typeName = item.split('.')[1];
+                if(!typeName) continue;
                 const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), typeName, false);
                 collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
                     ...collectedFile[sourceFile.getFilePath()],
                     [typeName]: t
                 };
-                if(item.includes(`${aliasName}.`)) {
-                    globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                        ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
-                        [name]: t
-                    };
-                    useTypes.typeToFileMap[typeName] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
-                }
+                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                    [typeName]: t
+                };
+                useTypes.typeToFileMap[typeName] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${typeName.toLowerCase()}`;
+
             }
         }
         collectedFile[name] = globalFileTypes[moduleSpecifierSourceFile.getBaseName()];
@@ -116,7 +125,10 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             objects = sourceFile.getEnums();
         }
         for (const object of objects) {
+            /** 记录目标类型 */
             let targetType: 'object' | 'array' | 'string' = 'object';
+            /** 记录泛型信息 */
+            let generics:string[];
             const name: string = object.getName();
             if (!object.isExported() && ![...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) continue;
             // 保存属性列表
@@ -124,6 +136,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
             if (type === 'interface') {
                 // 获取接口的属性列表
                 typeObject = getMembersToTypeValue(<InterfaceDeclaration>object) || {};
+                generics = getGenerics(<InterfaceDeclaration>object);
                 // 获取索引签名
                 const indexSignature = (<InterfaceDeclaration>object).getIndexSignatures()[0];
                 if(indexSignature) {
@@ -134,7 +147,8 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                     };
                 }
             } else if (type === 'type') {
-                [typeObject, targetType] = getDetailTypeByString(object.getText().split(/type.*?=/)[1]);
+                [typeObject, targetType] = getDetailTypeByString((<TypeAliasDeclaration>object).getTypeNode().getText());
+                generics = getGenerics(<TypeAliasDeclaration>object);
             } else if (type === 'enum') {
                 typeObject = getMembersToTypeValue(<EnumDeclaration>object);
             }
@@ -142,6 +156,7 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 value: typeObject,
                 type: type === 'interface' ? 'interface' : type === 'type' ? 'type' : 'enum',
                 targetType,
+                generics,
                 docs: collectDoc(object.getJsDocs()[0])
             };
             if (object.isExported()) {
@@ -216,7 +231,7 @@ const gettypeInfosByExportName = (sourceFile: SourceFile, name:string, isDefault
                     docs: collectDoc(namedExport.getJsDocs()[0])
                 };
             }else if(exportText.includes('type')) {
-                const [typeObject, targetType] = getDetailTypeByString(exportText.split('=')[1]?.replace(';', '')?.trim());
+                const [typeObject, targetType] = getDetailTypeByString(namedExport.getTypeNode().getText());
                 return {
                     type: 'type',
                     value: typeObject,
