@@ -177,7 +177,8 @@ export const createDocs = (collectMap: CollectMap) => {
         }
 
         child.stdout.on('data', (data) => {
-            log.log(`${data}`);
+            // eslint-disable-next-line no-console
+            console.log(`${data}`);
             if(`${data}`.includes('http://localhost')) {
                 resolve('执行成功');
             }

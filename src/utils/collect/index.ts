@@ -17,7 +17,10 @@ export function collect(paths) {
     };
 
     // 创建一个项目实例
-    const project = new Project();
+    const project = new Project({
+        tsConfigFilePath: 'tsconfig.json',
+        skipAddingFilesFromTsConfig: true,
+    });
 
     // 添加要分析的文件
     project.addSourceFilesAtPaths(paths.split(' '));
@@ -35,9 +38,13 @@ export function collect(paths) {
         const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { useTypes });
         const { globalTargetTypes, globalFileTypes, fileType } = collectTypes(sourceFile, useTypes);
+        let fileName = sourceFile.getBaseName();
+        if(fileName === 'index.ts') {
+            fileName = 'Index.ts';
+        }
         // hooks
         if(hooksDeclarationMap) {
-            collectMap.hooks[sourceFile.getBaseName()] = {
+            collectMap.hooks[fileName] = {
                 value: hooksDeclarationMap,
                 types: Object.keys(fileType.hooks).length ? fileType.hooks : null,
                 fileDoc: fileDocMap,
@@ -46,7 +53,7 @@ export function collect(paths) {
         }
         // utils
         if(functionDeclarationMap) {
-            collectMap.utils[sourceFile.getBaseName()] = {
+            collectMap.utils[fileName] = {
                 value: functionDeclarationMap,
                 types: Object.keys(fileType.util).length ? fileType.util : null,
                 fileDoc: fileDocMap,
@@ -55,7 +62,7 @@ export function collect(paths) {
         }
         // globalTypes
         if(globalFileTypes) {
-            collectMap.globalTypes[sourceFile.getBaseName()] = globalFileTypes;
+            collectMap.globalTypes[fileName] = globalFileTypes;
         }
         if(globalTargetTypes) {
             for(const fileName in globalTargetTypes) {

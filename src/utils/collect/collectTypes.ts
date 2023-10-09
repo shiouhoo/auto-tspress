@@ -1,10 +1,8 @@
-import { SourceFile, Project, EnumDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph';
+import { SourceFile, EnumDeclaration, TypeAliasDeclaration, InterfaceDeclaration } from 'ts-morph';
 import { UseTypes, TypeItem, TypeValue } from '@/types';
-import { setting } from '@/global';
 import { collectDoc } from './collectDoc';
 import { getDetailTypeByString, getMembersToTypeValue } from '../type/typeParse';
-
-const collectedFile:{[key: string]: Record<string, TypeItem>} = {};
+import { log } from '@/log';
 
 const getGenerics = (interfaceDeclaration: InterfaceDeclaration | TypeAliasDeclaration)=>{
     const generics = interfaceDeclaration.getTypeParameters();
@@ -23,60 +21,30 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         if(!importDeclaration.getImportClause()) continue;
         // 被导入模块名
         const moduleSpecifier = importDeclaration.getModuleSpecifierValue();
-        let moduleSpecifierSourceFile = importDeclaration.getModuleSpecifierSourceFile();
+        const moduleSpecifierSourceFile = importDeclaration.getModuleSpecifierSourceFile();
         if(!moduleSpecifierSourceFile) {
-            throw new Error(`在文件${sourceFile.getBaseName()}中，没有找到导入的${moduleSpecifier}模块`);
-        }
-        // 检查是否以@开头
-        if (moduleSpecifier.startsWith('@')) {
-            // 将@替换为实际路径
-            const actualPath = moduleSpecifier.replace('@', setting['@']);
-            moduleSpecifierSourceFile ||= new Project().getSourceFile(actualPath);
-        }
-        if(!moduleSpecifierSourceFile) continue;
-
-        // 之前已经搜集过该文件的类型
-        if(collectedFile[moduleSpecifierSourceFile.getFilePath()]) {
-            const map = collectedFile[moduleSpecifierSourceFile.getFilePath()];
-            for(const item of [...useTypes.hooks, ...useTypes.util]) {
-                const typeName = item.includes('.') ? item.split('.')[1] : item;
-                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
-                    [typeName]: map[typeName]
-                };
-                useTypes.typeToFileMap[typeName] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${typeName.toLowerCase()}`;
-            }
+            log.log(`在文件${sourceFile.getBaseName()}中，没有找到导入的${moduleSpecifier}模块`);
             continue;
         }
 
         // 默认导入
         /** 默认导入的名称 */
         const name = importDeclaration.getImportClause()?.getSymbol()?.getEscapedName();
-        if(name) {
-
+        if(name && [...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
             const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
-            collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
-                ...collectedFile[sourceFile.getFilePath()],
+            globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
+                ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
                 [name]: t
             };
-            if([...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
-                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
-                    [name]: t
-                };
-                useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
-            }
+            useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
+
         }
 
         // 具名导入
         for (const specifier of importDeclaration.getNamedImports()) {
             const name = specifier.getName();
-            const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false, moduleSpecifier);
-            collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
-                ...collectedFile[sourceFile.getFilePath()],
-                [name]: t
-            };
             if ([...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) {
+                const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false, moduleSpecifier);
                 globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
                     ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
                     [name]: t
@@ -88,15 +56,11 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
         const importText = importDeclaration.getImportClause().getText();
         if(importText.includes('* as')) {
             // 获取别名的名称
-            const aliasName = importText.match(/^\*\s+as\s+(\w+)/)[1];
+            // const aliasName = importText.match(/^\*\s+as\s+(\w+)/)[1];
             for(const item of [...useTypes.hooks, ...useTypes.util]) {
                 const typeName = item.split('.')[1];
                 if(!typeName) continue;
                 const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), typeName, false);
-                collectedFile[moduleSpecifierSourceFile.getFilePath()] = {
-                    ...collectedFile[sourceFile.getFilePath()],
-                    [typeName]: t
-                };
                 globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
                     ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
                     [typeName]: t
@@ -105,7 +69,6 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
 
             }
         }
-        collectedFile[name] = globalFileTypes[moduleSpecifierSourceFile.getBaseName()];
     }
 
     return globalFileTypes;
@@ -137,15 +100,6 @@ const collectTypeInFile = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 // 获取接口的属性列表
                 typeObject = getMembersToTypeValue(<InterfaceDeclaration>object) || {};
                 generics = getGenerics(<InterfaceDeclaration>object);
-                // 获取索引签名
-                const indexSignature = (<InterfaceDeclaration>object).getIndexSignatures()[0];
-                if(indexSignature) {
-                    typeObject[`[${indexSignature.getKeyName()} as ${indexSignature.getType().getText()}]`] = {
-                        value: indexSignature.getReturnType().getText(),
-                        isRequire: false,
-                        doc: collectDoc(indexSignature.getJsDocs()[0])
-                    };
-                }
             } else if (type === 'type') {
                 [typeObject, targetType] = getDetailTypeByString((<TypeAliasDeclaration>object).getTypeNode().getText());
                 generics = getGenerics(<TypeAliasDeclaration>object);

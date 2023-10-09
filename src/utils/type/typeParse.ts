@@ -84,6 +84,15 @@ export const getMembersToTypeValue = (namedExport:InterfaceDeclaration | EnumDec
                 doc: collectDoc(member.getJsDocs()[0])
             };
         }
+        // 获取索引签名
+        const indexSignature = namedExport.getIndexSignatures()[0];
+        if(indexSignature) {
+            typeObject[`[${indexSignature.getKeyName()} as ${indexSignature.getType().getText()}]`] = {
+                value: indexSignature.getReturnType().getText(),
+                isRequire: false,
+                doc: collectDoc(indexSignature.getJsDocs()[0])
+            };
+        }
     }else if(namedExport instanceof EnumDeclaration) {
         for(const member of namedExport.getMembers()) {
             typeObject[member.getName()] = {

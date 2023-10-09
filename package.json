@@ -12,6 +12,9 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
+  "auto-tspress": {
+    "dir": "src/**/*.ts"
+  },
   "bin": {
     "auto-tspress": "./lib/index.js"
   },
