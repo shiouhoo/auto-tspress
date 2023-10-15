@@ -3,7 +3,6 @@ import { FunctionDeclaration, VariableStatement } from 'ts-morph';
 import { Params } from '@/types';
 import { getTypeByText, isBaseType } from '../type/typeParse';
 import { splitFirstChar } from '../stringUtil';
-import { getUseTypeByText } from '../type/typeParse';
 
 // 获取函数参数列表
 export const getParamsList = (declaration: VariableStatement | FunctionDeclaration, useTypes: Set<string>) => {
@@ -68,9 +67,7 @@ export const getParamsList = (declaration: VariableStatement | FunctionDeclarati
             defaultValue
         });
         if(!isBase && type) {
-            for(const t of getUseTypeByText(type)) {
-                useTypes.add(t);
-            }
+            useTypes.add(type);
         }
     }
     return params;

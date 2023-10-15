@@ -22,54 +22,6 @@ export const getTypeByText = (str: string, splitIndex = 1): string => {
     return str;
 };
 
-/** 获取Record中使用到的特殊类型 */
-const getRecordType = (str: string) =>{
-    const match = str.match(/^Record<\s*[^,]+\s*,\s*([\s\S]+)>/)?.map(str => str.trim());
-    if(match) {
-        return getRecordType(match[1]);
-    }
-    return str;
-};
-
-/** 从type字符串中获得使用过的特殊类型 */
-export const getUseTypeByText = (str: string) => {
-    let bracketLevel = 0;
-    const paramsList = [];
-    let currentArg = '';
-
-    for (let i = 0;i < str.length;i++) {
-        const char = str[i];
-        if ((char === '&' || char === '|') && bracketLevel === 0) {
-            paramsList.push(currentArg.trim());
-            currentArg = '';
-        } else {
-            currentArg += char;
-
-            if (char === '<' || char === '{') {
-                bracketLevel++;
-            } else if (char === '>' || char === '}') {
-                bracketLevel--;
-            }
-        }
-    }
-    paramsList.push(currentArg.trim());
-    const results = [];
-    for(let i = 0;i < paramsList.length;i++) {
-        const item = paramsList[i];
-        if(item.includes('Record')) {
-            paramsList.push(getRecordType(item).trim());
-        }else if(/.*<.*>/.test(item)) {
-            if(!isBaseType(item.match(/.*<(.*?)>/)?.[1] || '')) {
-                paramsList.push(...getUseTypeByText(item.match(/.*<(.*?)>/)?.[1]));
-            }
-            results.push(item.replace(/(.*)<.*>/, '$1').trim());
-        }else if(!isBaseType(item)) {
-            results.push(item);
-        }
-    }
-    return results;
-};
-
 // 判断字符串是否为基本类型
 export const isBaseType = (str: string) => {
     return /^\w*(string|number|boolean|undefined|null|symbol)\w*$/.test(str);
