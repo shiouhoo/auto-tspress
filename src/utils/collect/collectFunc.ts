@@ -36,7 +36,7 @@ function collectVaribleFunc(variable: VariableStatement | FunctionDeclaration, i
     if (!variable.isExported()) return null;
     // 判断是否是函数
     if (variable instanceof VariableStatement && !varibleIsFunction(variable)) {
-        return {};
+        return null;
     }
     // 获取参数和返回值
     const params: Params = getParamsList(variable, ishooks ? useTypes.hooks : useTypes.util);

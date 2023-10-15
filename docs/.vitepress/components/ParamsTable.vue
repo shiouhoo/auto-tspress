@@ -35,8 +35,8 @@ const props = defineProps({
 
 const typeWidth = computed(()=>{
     return !!props.tableData.some((item)=>{
-        return item.describe.length > 20;
-    }) ? 150: '';
+        return item.type.length > 10;
+    }) ? 200: '';
 })
 
 const describeWidth = computed(()=>{

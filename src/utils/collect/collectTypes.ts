@@ -39,7 +39,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 ...globalFileTypes[fileName],
                 [name]: t
             };
-            useTypes.typeToFileMap[name] = `/globalTypes/${fileName.replace('ts', 'html')}#${name.toLowerCase()}`;
+            useTypes.typeToFileMap[name] = `/globalTypes/${fileName.replace(/.d.ts|.ts$/, '.html')}#${name.toLowerCase()}`;
 
         }
 
@@ -52,7 +52,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
                     ...globalFileTypes[fileName],
                     [name]: t
                 };
-                useTypes.typeToFileMap[name] = `/globalTypes/${fileName.replace('ts', 'html')}#${name.toLowerCase()}`;
+                useTypes.typeToFileMap[name] = `/globalTypes/${fileName.replace(/.d.ts|.ts$/, '.html')}#${name.toLowerCase()}`;
             }
         }
         // import * as 方式
@@ -68,7 +68,7 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
                     ...globalFileTypes[fileName],
                     [typeName]: t
                 };
-                useTypes.typeToFileMap[typeName] = `/globalTypes/${fileName.replace('ts', 'html')}#${typeName.toLowerCase()}`;
+                useTypes.typeToFileMap[typeName] = `/globalTypes/${fileName.replace(/.d.ts|.ts$/, '.html')}#${typeName.toLowerCase()}`;
 
             }
         }
