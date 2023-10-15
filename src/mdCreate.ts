@@ -163,4 +163,13 @@ export class MdCreator {
             this.content += `- 类型：\`${typeInfo.value}\`` + lineSysbol;
         }
     }
+    // 创建锚点跳转
+    createLinkNext() {
+        this.createSetup(`
+setTimeout(()=>{
+    const dom = document.querySelector(\`a[href="\${location.hash}"]\`)
+    dom && dom.click();
+})
+        `);
+    }
 }

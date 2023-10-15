@@ -115,8 +115,8 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
     const mdCreator = new MdCreator();
     mdCreator.createTitle(1, fileName);
     mdCreator.createFileDoc(funcs.fileDoc);
+    mdCreator.createLinkNext();
     if(itemType === 'utils' || itemType === 'hooks') {
-
         // 函数
         mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数', false);
         // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);

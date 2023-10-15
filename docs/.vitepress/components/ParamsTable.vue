@@ -1,6 +1,6 @@
 <template>
     <el-table :data="props.tableData" stripe border style="width: 100%;margin: 20px 0;">
-        <el-table-column prop="name" label="参数名" fixed="left" width="135"/>
+        <el-table-column prop="name" label="参数名" fixed="left" width="140"/>
         <el-table-column prop="type" label="类型" :width="typeWidth">
             <template #default="scope">
                 <a :href="scope.row.typeTarget" v-show="scope.row.typeTarget">{{ scope.row.type }}</a>
