@@ -3,8 +3,7 @@
         <el-table-column prop="name" label="参数名" fixed="left" width="140"/>
         <el-table-column prop="type" label="类型" :width="typeWidth">
             <template #default="scope">
-                <a :href="scope.row.typeTarget" v-show="scope.row.typeTarget">{{ scope.row.type }}</a>
-                <span v-show="!scope.row.typeTarget">{{ scope.row.type }}</span>
+                <span v-html="scope.row.type" ></span>
             </template>
         </el-table-column>
         <el-table-column prop="describe" label="说明"  :width="describeWidth"/>
@@ -22,7 +21,6 @@ import {computed} from 'vue'
 //     type: string,
 //     isRequire: string,
 //     default: string,
-//     typeTarget: string
 // }[]
 const props = defineProps({
     tableData: {

@@ -8,7 +8,9 @@ export class MdCreator {
     content: string;
     setup: string;
     index: number;
-    constructor() {
+    useTypesFileMap: Record<string, string>;
+    constructor(useTypesFileMap: Record<string, string>) {
+        this.useTypesFileMap = useTypesFileMap;
         this.header = '---' + lineSysbol;
         this.header += 'outline: deep' + lineSysbol;
         this.header += '---' + lineSysbol;
@@ -88,10 +90,18 @@ export class MdCreator {
     createReturns(text: string, type: 'type' | 'describe') {
         const typeText = type === 'type' ? '返回类型' : '描述';
         log.logCollect(`创建了${typeText}：` + text);
-        this.content += `- ${typeText}: ${escapeSpecialChars(text)}` + lineSysbol;
+        text = escapeSpecialChars(text);
+        if(type === 'type') {
+            for(const typeName in this.useTypesFileMap) {
+                if(text.includes(typeName)) {
+                    text = text.replaceAll(typeName, `<a href="${this.useTypesFileMap[typeName]}">${typeName}</a>`);
+                }
+            }
+        }
+        this.content += `- ${typeText}: ${text}` + lineSysbol;
     }
     // 创建参数表格
-    createParamsTable(params: Params, docs: Record<string, string[][]>, useTypesFileMap:Record<string, string>) {
+    createParamsTable(params: Params, docs: Record<string, string[][]>) {
         const doc = {};
         if(docs) {
             for(const item of docs['@param'] || []) {
@@ -106,13 +116,17 @@ export class MdCreator {
         }
         const props = [];
         for(const item of params) {
+            for(const typeName in this.useTypesFileMap) {
+                if(item.type.includes(typeName)) {
+                    item.type = item.type.replaceAll(typeName, `<a href="${this.useTypesFileMap[typeName]}">${typeName}</a>`);
+                }
+            }
             props.push({
                 name: item.name,
                 describe: doc[item.name] || '-',
                 type: item.type || 'any',
                 isRequire: item.isRequire,
                 defaultValue: !item.isRequire ? item.defaultValue : '-',
-                typeTarget: useTypesFileMap[item.type]
             });
         }
         this.createSetup(`const tableData${this.index}=${objectToString(props)}`);

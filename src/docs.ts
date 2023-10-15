@@ -112,7 +112,7 @@ const createSidebar = (collectMap: CollectMap) => {
 
 /** 生成一个文件的md文档 */
 const createContent = (filePath:string, funcs: FileMap, fileName:string, itemType:'utils'|'hooks'|'globalTypes', globalTypeMap: Record<string, TypeItem>) => {
-    const mdCreator = new MdCreator();
+    const mdCreator = new MdCreator(funcs.useTypesFileMap);
     mdCreator.createTitle(1, fileName);
     mdCreator.createFileDoc(funcs.fileDoc);
     mdCreator.createLinkNext();
@@ -124,10 +124,10 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
             const func = funcs.value[funcName];
             mdCreator.createTitle(3, funcName);
             mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
-            mdCreator.createParamsTable(func.params, func.docs, funcs.useTypesFileMap);
+            mdCreator.createParamsTable(func.params, func.docs);
             mdCreator.createTitle(4, '返回值', false);
             mdCreator.createReturns(func.returns?.type || 'void', 'type');
-            mdCreator.createReturns(func.docs?.['@returns']?.[0]?.[0] || '暂无', 'describe');
+            func.docs?.['@returns']?.[0]?.[0] && mdCreator.createReturns(func.docs?.['@returns']?.[0]?.[0] || '暂无', 'describe');
         }
     }
     // type

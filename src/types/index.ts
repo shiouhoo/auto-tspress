@@ -1,11 +1,9 @@
 /** 参数类型 */
 export type Params = {
-    /** name */
     name: string
     type: string
     isBase: boolean
-    isRequire: boolean
-    typeTarget?: string
+    isRequire: boolean,
     defaultValue?: string
 }[]
 
