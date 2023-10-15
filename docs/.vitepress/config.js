@@ -5,7 +5,7 @@ import interfacesConfig from '../globalTypes.js'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  lang: 'en-US',
+  lang: 'zh-CN',
   title: "auto-tspress 文档",
   description: "点击开始查看你的文档",
   themeConfig: {    
@@ -51,7 +51,10 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/shiouhoo/quick-tsdoc' }
     ],
-
+    docFooter: {
+      prev: "上一页",
+      next: "下一页",
+    },
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2023-present shiouhoo'

@@ -1,7 +1,11 @@
 <template>
     <el-table :data="props.tableData" stripe border style="width: 100%;margin: 20px 0;">
-        <el-table-column prop="name" label="参数名" fixed="left" width="130"/>
-        <el-table-column prop="type" label="类型" :width="typeWidth"/>
+        <el-table-column prop="name" label="参数名" fixed="left" width="140"/>
+        <el-table-column prop="type" label="类型" :width="typeWidth">
+            <template #default="scope">
+                <span v-html="scope.row.type" ></span>
+            </template>
+        </el-table-column>
         <el-table-column prop="describe" label="说明"  :width="describeWidth"/>
         <el-table-column prop="isRequire" label="必传" width="80"/>
         <el-table-column prop="defaultValue" label="默认值" :width="defaultWidth"/>
@@ -29,8 +33,8 @@ const props = defineProps({
 
 const typeWidth = computed(()=>{
     return !!props.tableData.some((item)=>{
-        return item.describe.length > 20;
-    }) ? 150: '';
+        return item.type.length > 10;
+    }) ? 200: '';
 })
 
 const describeWidth = computed(()=>{

@@ -17,8 +17,13 @@
 
 .vp-doc h3{
     padding-bottom: 10px;
-    border-bottom: 1px solid var(--vp-c-divider);
+    border-bottom: 2px solid var(--vp-c-divider);
+    margin: 16px 0;
 }
 .vp-doc h2{
     margin: 0;
+}
+
+.vp-doc h1{
+    padding-bottom: 10px;
 }

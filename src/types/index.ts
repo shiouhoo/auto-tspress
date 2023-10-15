@@ -1,11 +1,9 @@
 /** 参数类型 */
 export type Params = {
-    /** name */
-    // TODO 对象解析
     name: string
     type: string
     isBase: boolean
-    isRequire: boolean
+    isRequire: boolean,
     defaultValue?: string
 }[]
 
@@ -32,22 +30,27 @@ export interface TypeValue {
      */
     [key: string]: {
         value: string,
-        doc: Record<string, string[][]>
+        isRequire: boolean
+        doc: Record<string, string[][]>,
     }
 }
 
 export interface TypeItem {
     type: 'interface' | 'type' | 'enum' | 'any' | '未知'
     value: TypeValue | string,
+    docs: Record<string, string[][]>
     /** 针对type */
     targetType?: 'object' | 'array' | 'string' | 'Record'
-    docs: Record<string, string[][]>
+    moduleName?: string,
+    generics?: string[]
 }
 /** 一个文件的收集容器对象 */
 export type FileMap = {
     types: Record<string, TypeItem>,
     value: FunctionMap,
-    fileDoc: Record<string, string>
+    fileDoc: Record<string, string>,
+    /** 记录特殊类型的文档位置 */
+    useTypesFileMap: Record<string, string>
 }
 export interface CollectMap {
     /**
@@ -64,4 +67,5 @@ export interface CollectMap {
 export interface UseTypes{
     util: Set<string>,
     hooks: Set<string>,
+    typeToFileMap: Record<string, string>
 }

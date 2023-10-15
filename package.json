@@ -1,16 +1,19 @@
 {
   "name": "auto-tspress",
-  "version": "0.0.22",
+  "version": "0.0.25",
   "description": "通过tsdoc快速生成项目中工具函数的文档",
   "type": "module",
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "rollup -c",
     "r": "node ./lib/index",
-    "dev": "rollup  --config rollup.dev.config.js && node ./lib/index",
+    "dev": "rollup --config rollup.dev.config.js && node ./lib/index",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
+  },
+  "auto-tspress": {
+    "dir": "src/**/*.ts"
   },
   "bin": {
     "auto-tspress": "./lib/index.js"

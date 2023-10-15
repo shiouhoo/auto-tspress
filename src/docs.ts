@@ -1,10 +1,11 @@
-import { cliPath } from './../global';
+import { cliPath, setting } from './global';
 import { spawn } from 'child_process';
-import { CollectMap, FileMap, TypeItem } from '../types';
+import { CollectMap, FileMap, TypeItem } from './types';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { MdCreator } from './mdCreate';
+import { log } from './log';
 
 // 移动文件
 function copy(src, dest) {
@@ -72,6 +73,7 @@ const changeFirstPage = (startPath: string)=>{
 const createSidebar = (collectMap: CollectMap) => {
     let startPath = '';
     for(const item of ['hooks', 'utils', 'globalTypes']) {
+        log.logCollect(`正在生成${item}的文档`);
         if(!fs.existsSync(path.join(cliPath, `/docs/${item}`))) {
             fs.mkdirSync(path.join(cliPath, `/docs/${item}`));
         }
@@ -82,6 +84,8 @@ const createSidebar = (collectMap: CollectMap) => {
         };
             // key 为完整文件名
         for(const key in collectMap[item] || {}) {
+            log.logCollect(`-----------------------`);
+            log.logCollect(`正在生成${key}的md文档`);
             const fileName = key.split('.')[0];
             data.item.push({
                 text: key,
@@ -108,27 +112,27 @@ const createSidebar = (collectMap: CollectMap) => {
 
 /** 生成一个文件的md文档 */
 const createContent = (filePath:string, funcs: FileMap, fileName:string, itemType:'utils'|'hooks'|'globalTypes', globalTypeMap: Record<string, TypeItem>) => {
-    const mdCreator = new MdCreator();
+    const mdCreator = new MdCreator(funcs.useTypesFileMap);
     mdCreator.createTitle(1, fileName);
     mdCreator.createFileDoc(funcs.fileDoc);
+    mdCreator.createLinkNext();
     if(itemType === 'utils' || itemType === 'hooks') {
         // 函数
-        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数');
+        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数', false);
         // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
         for(const funcName in funcs.value) {
             const func = funcs.value[funcName];
             mdCreator.createTitle(3, funcName);
             mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0]);
             mdCreator.createParamsTable(func.params, func.docs);
-            // 返回值
-            mdCreator.createTitle(4, '返回值');
-            mdCreator.createText('- 返回类型: ' + (func.returns?.type || 'void'));
-            mdCreator.createText('- 描述: ' + (func.docs?.['@returns']?.[0]?.[0] || '暂无'));
+            mdCreator.createTitle(4, '返回值', false);
+            mdCreator.createReturns(func.returns?.type || 'void', 'type');
+            func.docs?.['@returns']?.[0]?.[0] && mdCreator.createReturns(func.docs?.['@returns']?.[0]?.[0] || '暂无', 'describe');
         }
     }
     // type
     const funcTypeShow = ['utils', 'hooks'].includes(itemType) && funcs.types;
-    funcTypeShow && mdCreator.createTitle(2, '类型');
+    funcTypeShow && mdCreator.createTitle(2, '类型', false);
     const globalTypeTableShow = itemType === 'globalTypes' && globalTypeMap;
     if(funcTypeShow || globalTypeTableShow) {
         const map = funcTypeShow ? funcs.types : globalTypeMap;
@@ -141,10 +145,15 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
             }
             mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
             mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
+            type.generics && mdCreator.createDescText(type.generics, { tag: '泛型' });
             if(type.targetType === 'Record') {
                 const key = Object.keys(type.value)[0];
-                mdCreator.createText(`- 类型: Record`);
+                mdCreator.createDescText('Record', { tag: '类型' });
                 mdCreator.createTsCode(`Record<${key},${(<string>type.value[key].value)}>`);
+            }else if(type.type === '未知') {
+                if(type.moduleName) {
+                    mdCreator.createText(type.moduleName, '包名');
+                }
             }else{
                 mdCreator.createTypesTable(type);
             }
@@ -153,26 +162,22 @@ const createContent = (filePath:string, funcs: FileMap, fileName:string, itemTyp
     }
     changeFile(filePath, mdCreator.getContent());
 };
-
-const createMarkdown = (collectMap: CollectMap) => {
+export const createDocs = (collectMap: CollectMap) => {
     deleteFolderDocs();
     createSidebar(collectMap);
-};
-
-export const createDocs = (collectMap: CollectMap) => {
-    createMarkdown(collectMap);
     return new Promise((resolve, reject) => {
         let child;
 
         if (os.platform() === 'win32') {
             // Windows
-            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && npx vitepress dev docs --port 5073`]);
+            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && npx vitepress dev docs --port ${setting.port}`]);
         } else {
             // macOS 或 Linux
-            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && npx vitepress dev docs --port 5073`]);
+            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && npx vitepress dev docs --port ${setting.port}`]);
         }
 
         child.stdout.on('data', (data) => {
+            // eslint-disable-next-line no-console
             console.log(`${data}`);
             if(`${data}`.includes('http://localhost')) {
                 resolve('执行成功');

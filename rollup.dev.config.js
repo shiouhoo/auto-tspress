@@ -1,6 +1,7 @@
 import ts from 'rollup-plugin-typescript2';
 import json from '@rollup/plugin-json';
 import path from 'path';
+import commonjs from '@rollup/plugin-commonjs';
 import { fileURLToPath } from 'url';
 
 const __filenameNew = fileURLToPath(import.meta.url);
@@ -19,6 +20,7 @@ export default {
     },
     plugins: [ // 这个插件是有执行顺序的
         ts({ tsconfig: './tsconfig.json', tsconfigOverride: override }),
+        commonjs(),
         json(),
     ]
 };

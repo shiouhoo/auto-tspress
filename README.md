@@ -4,8 +4,9 @@
 # why tspress
 
 - 支持读取函数参数ts类型，不需要在函数中再次声明
-- 支持文件doc
-- 支持文件参数使用通配符
+- 支持文件tsdoc
+- 支持读取文件路径配置使用通配符
+- 自动解析类型，并支持一键跳转到类型详情
 - 采用了vitepress来生成文档网站，简洁好看
 
 # 使用
@@ -40,20 +41,16 @@ pnpm i auto-tspress -D
 然后在你的package.json加入以下命令
 
 ```ts
-// window
 "scripts": {
-	"tspress": ".\\node_modules\\.bin\\auto-tspress"
-}
-// macOS || linux
-"scripts": {
-	"tspress": "./node_modules/.bin/auto-tspress"
+	"tspress": "auto-tspress"
 }
 ```
 
-运行命令tspress即可使用。
+运行命令tspress即可使用(此script还未加入配置，尚不可使用)。
 
 # 配置
 
+## package.json
 我们推荐使用局部安装的方式，在package.json中可以配置auto-tspress
 ```ts
 "auto-tspress": {
@@ -61,13 +58,16 @@ pnpm i auto-tspress -D
     "@": "src"
 },
 ```
-
+## 命令行参数
 同样，在使用过程中，auto-tspress提供了多个命令支持运行，如果你不想在项目中安装auto-tspress就只能使用该方式。你的命令可能长这样：`auto-tspress -d "src/hooks/*.ts" -@ src`
+## 配置详情
 
 | 参数      | 说明                                                         | 必传 |
 | --------- | ------------------------------------------------------------ | ---- |
-| -d或--dir | 要解析的文件，支持通配符解析，如果有多个文件需要加上引号，如“utils/\*{.d.ts,.ts} index.ts”,如果你想排除某个文件，可以使用!,如“src/\*\*/\*.ts  !main.ts” | 是   |
+| -d或--dir | 要解析的文件，支持通配符解析，如果有多个文件需要加上引号，如“utils/\*{.d.ts,.ts} index.ts”,如果你想包含整个文件夹，但是排除某个文件，可以使用!,如“src/\*\*/\*  !*/main.ts”。 | 是   |
 | -@ | 如果你的项目使用了路径别名请配置该参数，默认值为`src` | 否   |
+| -p或--port | 设置运行端口，默认值为`5073`（当端口占用时会自动加1） | 否   |
+| --print | 生成文档时是否输出文件信息，默认值为`false` | 否   |
 
 # tsdoc
 
