@@ -4,6 +4,7 @@ import { getParamsList } from './collectParams';
 import { getReturns } from './collectReturns';
 import { collectDoc } from './collectDoc';
 import { varibleIsFunction } from '../functionUtil';
+import { parseFileName } from '../fileUtils';
 
 // 更新一个函数声明
 function setFunctionDeclarationMap(functionDeclarationMap: FunctionMap, hooksDeclarationMap: FunctionMap, params: Params, returns: Returns, docMap: Record<string, string[][]>, funcName: string) {
@@ -94,7 +95,7 @@ export function collectFunctions(sourceFile: SourceFile, { useTypes } :{useTypes
             const params: Params = getParamsList(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
             const returns: Returns = getReturns(defaultDeclaraation, ishooks ? useTypes.hooks : useTypes.util);
             const docMap = collectDoc(defaultDeclaraation.getJsDocs()[0]);
-            [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, (ishooks ? sourceFile.getBaseName() : 'default') + '(默认导出)');
+            [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, (ishooks ? parseFileName(sourceFile.getBaseName()) : 'default') + '(默认导出)');
         }
     }
     return { functionDeclarationMap, hooksDeclarationMap };

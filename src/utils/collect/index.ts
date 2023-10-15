@@ -4,6 +4,7 @@ import { collectFileDoc } from './collectDoc';
 import { collectFunctions } from './collectFunc';
 import { collectTypes } from './collectTypes';
 import { setReturnSymbol } from '@/global';
+import { parseFileName } from '../fileUtils';
 
 let useTypes: UseTypes;
 
@@ -38,10 +39,7 @@ export function collect(paths) {
         const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
         const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { useTypes });
         const { globalTargetTypes, globalFileTypes, fileType } = collectTypes(sourceFile, useTypes);
-        let fileName = sourceFile.getBaseName();
-        if(fileName === 'index.ts') {
-            fileName = 'Index.ts';
-        }
+        const fileName = parseFileName(sourceFile.getBaseName());
         // hooks
         if(hooksDeclarationMap) {
             collectMap.hooks[fileName] = {

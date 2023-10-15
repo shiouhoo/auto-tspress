@@ -25,6 +25,7 @@ export const objectToString = (obj) => {
         return JSON.stringify(obj);
     }
 };
+/** 按第一个字符分割 */
 export const splitFirstChar = (str:string, char: string) => {
     const index = str.indexOf(char);
     if(index !== -1) {
@@ -32,7 +33,7 @@ export const splitFirstChar = (str:string, char: string) => {
     }
     return [str];
 };
-
+/** 转义特殊字符 */
 export const escapeSpecialChars = (text:string) => {
     return text.replace(/([\\`*_{}[\]()<>#+.!-])/g, '\\$1');
 };

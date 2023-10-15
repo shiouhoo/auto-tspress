@@ -3,6 +3,7 @@ import { UseTypes, TypeItem, TypeValue } from '@/types';
 import { collectDoc } from './collectDoc';
 import { getDetailTypeByString, getMembersToTypeValue } from '../type/typeParse';
 import { log } from '@/log';
+import { parseFileName } from '../fileUtils';
 
 const getGenerics = (interfaceDeclaration: InterfaceDeclaration | TypeAliasDeclaration)=>{
     const generics = interfaceDeclaration.getTypeParameters();
@@ -27,16 +28,18 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
             continue;
         }
 
+        const fileName = parseFileName(moduleSpecifierSourceFile.getBaseName());
+
         // 默认导入
         /** 默认导入的名称 */
         const name = importDeclaration.getImportClause()?.getSymbol()?.getEscapedName();
         if(name && [...useTypes.util, ...useTypes.hooks].some(element => element.includes(name))) {
             const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, true);
-            globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+            globalFileTypes[fileName] = {
+                ...globalFileTypes[fileName],
                 [name]: t
             };
-            useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
+            useTypes.typeToFileMap[name] = `/globalTypes/${fileName.replace('ts', 'html')}#${name.toLowerCase()}`;
 
         }
 
@@ -45,11 +48,11 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
             const name = specifier.getName();
             if ([...useTypes.hooks, ...useTypes.util].some(element => element.includes(name))) {
                 const t = gettypeInfosByExportName(moduleSpecifierSourceFile, name, false, moduleSpecifier);
-                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                globalFileTypes[fileName] = {
+                    ...globalFileTypes[fileName],
                     [name]: t
                 };
-                useTypes.typeToFileMap[name] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${name.toLowerCase()}`;
+                useTypes.typeToFileMap[name] = `/globalTypes/${fileName.replace('ts', 'html')}#${name.toLowerCase()}`;
             }
         }
         // import * as 方式
@@ -61,11 +64,11 @@ const collectImportTypes = (sourceFile: SourceFile, useTypes: UseTypes) => {
                 const typeName = item.split('.')[1];
                 if(!typeName) continue;
                 const t = gettypeInfosByExportName(importDeclaration.getModuleSpecifierSourceFile(), typeName, false);
-                globalFileTypes[moduleSpecifierSourceFile.getBaseName()] = {
-                    ...globalFileTypes[moduleSpecifierSourceFile.getBaseName()],
+                globalFileTypes[fileName] = {
+                    ...globalFileTypes[fileName],
                     [typeName]: t
                 };
-                useTypes.typeToFileMap[typeName] = `../globalTypes/${moduleSpecifierSourceFile.getBaseName().replace('ts', 'html').toLowerCase()}#${typeName.toLowerCase()}`;
+                useTypes.typeToFileMap[typeName] = `/globalTypes/${fileName.replace('ts', 'html')}#${typeName.toLowerCase()}`;
 
             }
         }
