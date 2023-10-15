@@ -4,8 +4,10 @@ import { InterfaceDeclaration, EnumDeclaration } from 'ts-morph';
 import { splitFirstChar } from '../stringUtil';
 
 /** 通过字符串获取类型 */
-export const getTypeByText = (str: string, isDefault): string => {
-    if(!Number.isNaN(Number(str))) {
+export const getTypeByText = (str: string, splitIndex = 1): string => {
+    if(/^['"`].+['"`]$/.test(str)) {
+        return 'string';
+    }else if(!Number.isNaN(Number(str))) {
         return 'number';
     }else if(str === 'true' || str === 'false') {
         return 'boolean';
@@ -13,8 +15,8 @@ export const getTypeByText = (str: string, isDefault): string => {
         const match = str.match(/new (.+?)\(/);
         return match ? match[1] : '';
     }else if(str.includes('.')) {
-        if(Number.isNaN(Number(str.split('.')[isDefault ? 0 : 1]))) {
-            return str.split('.')[isDefault ? 0 : 1];
+        if(Number.isNaN(Number(str.split('.')[splitIndex]))) {
+            return str.split('.')[splitIndex];
         }
     }
     return str;

@@ -45,7 +45,7 @@ export const getParamsList = (declaration: VariableStatement | FunctionDeclarati
         if(p.includes('=')) {
             isRequire = false;
             [name, defaultValue] = p.split('=');
-            type = getTypeByText(defaultValue.trim(), true);
+            type = getTypeByText(defaultValue.trim(), 0);
         }else if(p.includes(':')) {
             if(p.includes('?')) {
                 isRequire = false;
@@ -62,7 +62,7 @@ export const getParamsList = (declaration: VariableStatement | FunctionDeclarati
         params.push({
             name: name && name.trim(),
             // 处理 import * as
-            type: type && (isAsImport ? getTypeByText(type, false) : type).trim(),
+            type: type && (isAsImport ? getTypeByText(type, 1) : type).trim(),
             isBase: (isBase = isBaseType(type)),
             isRequire,
             defaultValue
