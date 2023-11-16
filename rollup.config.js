@@ -1,5 +1,5 @@
 import ts from 'rollup-plugin-typescript2';
-import { terser } from 'rollup-plugin-terser';
+import { terser } from '@rollup/plugin-terser';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import path from 'path';
