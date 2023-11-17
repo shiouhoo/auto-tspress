@@ -69,11 +69,14 @@ export function collectFunctions(sourceFile: SourceFile, { useTypes } :{useTypes
             }else{
                 varibleName = func.getName();
             }
-            funcNames[varibleName] = func;
             isDefaultExport = func.isDefaultExport();
+            if(isDefaultExport && varibleName === undefined) {
+                varibleName = '';
+            }
             // 获取参数和返回值
             const paramsAndReturns = collectVaribleFunc(func, varibleName.startsWith('use'), useTypes);
             if(!paramsAndReturns) continue;
+            funcNames[varibleName] = func;
             const { params, returns } = paramsAndReturns;
             const docMap = collectDoc(func.getJsDocs()[0]);
             [functionDeclarationMap, hooksDeclarationMap] = setFunctionDeclarationMap(functionDeclarationMap, hooksDeclarationMap, params, returns, docMap, isDefaultExport ? `${varibleName}(默认导出)` : varibleName);

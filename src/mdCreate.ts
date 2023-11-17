@@ -12,7 +12,7 @@ export class MdCreator {
     constructor(useTypesFileMap: Record<string, string>) {
         this.useTypesFileMap = useTypesFileMap;
         this.header = '---' + lineSysbol;
-        this.header += 'outline: deep' + lineSysbol;
+        this.header += 'outline: [1,2,3]' + lineSysbol;
         this.header += '---' + lineSysbol;
         this.content = '';
         this.setup = '';
