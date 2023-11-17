@@ -1,4 +1,4 @@
-import { cliPath, setting } from './global';
+import { cliPath, config } from './global';
 import { spawn } from 'child_process';
 import { CollectMap, FileMap, TypeItem } from './types';
 import fs from 'fs';
@@ -73,7 +73,7 @@ const changeFirstPage = (startPath: string)=>{
 const createSidebar = (collectMap: CollectMap) => {
     let startPath = '';
     for(const item of ['hooks', 'utils', 'globalTypes']) {
-        log.logCollect(`正在生成${item}的文档`);
+        log.logDebug(`正在生成${item}的文档`);
         if(!fs.existsSync(path.join(cliPath, `/docs/${item}`))) {
             fs.mkdirSync(path.join(cliPath, `/docs/${item}`));
         }
@@ -84,8 +84,8 @@ const createSidebar = (collectMap: CollectMap) => {
         };
             // key 为完整文件名
         for(const key in collectMap[item] || {}) {
-            log.logCollect(`-----------------------`);
-            log.logCollect(`正在生成${key}的md文档`);
+            log.logDebug(`-----------------------`);
+            log.logDebug(`正在生成${key}的md文档`);
             const fileName = key.split('.')[0];
             data.item.push({
                 text: key,
@@ -170,10 +170,10 @@ export const createDocs = (collectMap: CollectMap) => {
 
         if (os.platform() === 'win32') {
             // Windows
-            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && vitepress dev docs --port ${setting.port}`]);
+            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && vitepress dev docs --port ${config.server.port}`]);
         } else {
             // macOS 或 Linux
-            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && vitepress dev docs --port ${setting.port}`]);
+            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && vitepress dev docs --port ${config.server.port}`]);
         }
 
         child.stdout.on('data', (data) => {

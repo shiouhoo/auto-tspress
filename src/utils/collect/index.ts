@@ -3,12 +3,12 @@ import { Project } from 'ts-morph';
 import { collectFileDoc } from './collectDoc';
 import { collectFunctions } from './collectFunc';
 import { collectTypes } from './collectTypes';
-import { setReturnSymbol } from '@/global';
+import { setReturnSymbol, config } from '@/global';
 import { parseFileName } from '../fileUtils';
 
 let useTypes: UseTypes;
 
-export function collect(paths) {
+export function collect() {
 
     // 创建一个收集map, key为文件名, value为文件中的函数Map
     const collectMap: CollectMap = {
@@ -24,7 +24,7 @@ export function collect(paths) {
     });
 
     // 添加要分析的文件
-    project.addSourceFilesAtPaths(paths.split(' '));
+    project.addSourceFilesAtPaths([...config.include, ...config.exclude]);
     const sourceFiles = project.getSourceFiles();
 
     for (const sourceFile of sourceFiles) {

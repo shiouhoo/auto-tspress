@@ -12,7 +12,7 @@ export class MdCreator {
     constructor(useTypesFileMap: Record<string, string>) {
         this.useTypesFileMap = useTypesFileMap;
         this.header = '---' + lineSysbol;
-        this.header += 'outline: [1,2,3]' + lineSysbol;
+        this.header += 'outline: [2, 3]' + lineSysbol;
         this.header += '---' + lineSysbol;
         this.content = '';
         this.setup = '';
@@ -34,13 +34,13 @@ export class MdCreator {
     // 创建标题
     createTitle(level:1|2|3|4|5|6, title:string, isLog = true) {
         if(!title) return;
-        isLog && log.logCollect('创建了一个标题：' + title);
+        isLog && log.logDebug('创建了一个标题：' + title);
         this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
     // 创建文本
     createText(text: string, tag?: string) {
         if(!text) return;
-        log.logCollect('创建了一段文本：' + text);
+        log.logDebug('创建了一段文本：' + text);
         if(tag) {
             this.content += `- ${tag}: `;
         }
@@ -74,7 +74,7 @@ export class MdCreator {
     }
     // 创建文件说明
     createFileDoc(doc: Record<string, string>) {
-        log.logCollect('创建了一个文件说明：' + JSON.stringify(doc, null, 2));
+        log.logDebug('创建了一个文件说明：' + JSON.stringify(doc, null, 2));
         if(!doc) return;
         if(doc['@description']) {
             this.content += `- 描述：${escapeSpecialChars(doc['@description'])}` + lineSysbol;
@@ -89,7 +89,7 @@ export class MdCreator {
     // 创建返回类型
     createReturns(text: string, type: 'type' | 'describe') {
         const typeText = type === 'type' ? '返回类型' : '描述';
-        log.logCollect(`创建了${typeText}：` + text);
+        log.logDebug(`创建了${typeText}：` + text);
         text = escapeSpecialChars(text);
         if(type === 'type') {
             for(const typeName in this.useTypesFileMap) {
@@ -108,7 +108,7 @@ export class MdCreator {
                 doc[item[0]] = item.slice(1, item.length).join(' ').replace(/^[- ]+/g, '');
             }
         }
-        log.logCollect('创建了一个参数表格：' + JSON.stringify(params, null, 2), 'doc依赖：' + JSON.stringify(doc, null, 2));
+        log.logDebug('创建了一个参数表格：' + JSON.stringify(params, null, 2), 'doc依赖：' + JSON.stringify(doc, null, 2));
         this.content += `#### params参数` + lineSysbol;
         if(!params || !params.length) {
             this.content += `无` + lineSysbol;
@@ -139,7 +139,7 @@ export class MdCreator {
             this.content += `无` + lineSysbol;
             return;
         }
-        log.logCollect('创建了一个类型表格：' + JSON.stringify(typeInfo, null, 2));
+        log.logDebug('创建了一个类型表格：' + JSON.stringify(typeInfo, null, 2));
         const props = [];
         const typeShouldTable = typeInfo.type === 'type' && ['object', 'array'].includes(typeInfo.targetType);
         if(['interface', 'enum'].includes(typeInfo.type) || typeShouldTable) {

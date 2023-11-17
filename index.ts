@@ -1,66 +1,55 @@
-import { command } from './src/command';
 import { collect } from './src/utils/collect';
 import { createDocs } from './src/docs';
 import { CollectMap } from './src/types';
-import { setting } from './src/global';
+import { config } from './src/global';
+import { ConfigError } from './src/error';
 import { log } from './src/log';
 import fs from 'fs';
 import path from 'path';
+import { Project, Node } from 'ts-morph';
 
-const init = () => {
-    try{
-        const pkg = fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8');
-        const config = JSON.parse(pkg)['auto-tspress'];
-        for(const key in config) {
-            if(!(key in setting)) {
-                log.log(`配置项${key}不存在`);
-            }else{
-                setting[key] = config[key];
-            }
-        }
-    } catch (e) {
-        if(e.code === 'ENOENT') {
-            log.log('找不到package.json文件，将使用命令行参数');
+const init = async () => {
+
+    // 读取运行目录的config文件
+    const configPath = path.join(process.cwd(), 'auto-tspress.config.ts');
+    // 文件存在则读取
+    if(fs.existsSync(configPath)) {
+        const project = new Project();
+        const sourceFile = project.addSourceFileAtPath(configPath);
+        const defaultExportSymbol = sourceFile.getDefaultExportSymbol();
+        const declaration = defaultExportSymbol.getDeclarations()[0];
+
+        if (declaration && Node.isExportAssignment(declaration)) {
+            const expression = declaration.getExpression();
+            const func = eval(expression.getText());
+            config.setConfig(func());
         }
     }
-    const program = command();
-    program
-        .action((dirMap: { dir: string, print:boolean, port:number }) => {
-            if(dirMap.dir) {
-                setting.dir = dirMap.dir;
-            }
-            if(dirMap['@']) {
-                setting['@'] = dirMap['@'].endsWith('/') ? dirMap['@'].slice(0, -1) : dirMap['@'];
-            }
-            if(dirMap.print) {
-                setting.isPrintCollect = true;
-            }
-            if(dirMap.port) {
-                setting.port = dirMap.port;
-            }
-            if(!setting.dir) {
-                log.log('解析文件不可为空');
-                return;
-            }
-            log.log('正在解析文件，请稍后', setting.dir);
-            const collectMap: CollectMap = collect(setting.dir);
+    if(!config.include.length) {
+        throw new ConfigError('include配置不可为空');
+    }
 
-            log.log('数据收集成功，开始生成文档');
+    log.log('auto-tspress,开始运行');
+    const collectMap: CollectMap = collect();
 
-            createDocs(collectMap).then(() => {
+    log.log('数据收集成功，开始生成文档');
 
-            }).catch((err) => {
-                log.log(err);
-            });
+    createDocs(collectMap).then(() => {
 
-        });
-    program.parse(process.argv);
+    }).catch((err) => {
+        log.log(err);
+    });
 
 };
 
-try{
-    init();
-}catch(err) {
-    // eslint-disable-next-line no-console
-    console.error(err);
-}
+(async () => {
+    try {
+        await init();
+    } catch (err) {
+        if(err instanceof ConfigError) {
+            log.log(err.message);
+            return;
+        }
+        log.log(err);
+    }
+})();
