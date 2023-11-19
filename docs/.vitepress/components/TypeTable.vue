@@ -1,6 +1,11 @@
 <template>
     <el-table :data="props.tableData" stripe border style="width: 100%;margin-top: 20px;">
-        <el-table-column prop="name" label="键名" fixed="left" width="140" />
+        <el-table-column prop="name" label="键名" fixed="left" width="150" >
+            <template #default="scope">
+                <span>{{  scope.row.name }}</span>
+                <el-tag style="margin-left: 5px;" v-if="scope.row.isIndexSignature">索引签名</el-tag>
+            </template>
+        </el-table-column>
         <el-table-column prop="type" :label="getLabel" :width="typeWidth"/>
         <el-table-column prop="describe" label="说明" />
         <el-table-column prop="isRequire" label="必传" width="100"/>

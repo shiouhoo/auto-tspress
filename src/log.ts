@@ -2,6 +2,9 @@
 /* eslint-disable no-console */
 import { config } from './global';
 class Log {
+    console(obj: any) {
+        console.log(obj);
+    }
     log(...strArr: any[]) {
         let str = '';
         for(let i = 0;i < strArr.length;i++) {

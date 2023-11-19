@@ -50,6 +50,6 @@ const init = async () => {
             log.log(err.message);
             return;
         }
-        log.log(err);
+        log.console(err);
     }
 })();

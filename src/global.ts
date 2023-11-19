@@ -1,5 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Project, SourceFile, TypeChecker } from 'ts-morph';
 
 // 脚手架路径
 export const cliPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '../');
@@ -65,3 +66,14 @@ class Config {
 }
 
 export const config = new Config();
+
+// ts-morph实例
+export const tsMorph : {
+    project: Project,
+    sourchFile: SourceFile,
+    typeChecker: TypeChecker,
+} = {
+    project: null,
+    typeChecker: null,
+    sourchFile: null
+};
