@@ -2,6 +2,14 @@ import { JSDoc, SourceFile, ts } from 'ts-morph';
 import { lineSysbol } from '../../global';
 import { splitFirstChar } from '../stringUtil';
 
+export function collectDocByTsType(declaration: ts.Node) {
+    const doc = declaration.getChildren()[0] as ts.JSDoc;
+    if(doc && doc.kind === ts.SyntaxKind.JSDoc) {
+        return collectDocByTsDoc(doc);
+    }
+    return null;
+}
+
 // 收集jsDoc
 export function collectDoc(doc: JSDoc) {
     if (!doc) return null;
@@ -10,10 +18,18 @@ export function collectDoc(doc: JSDoc) {
     };
     for (const jsDocTag of doc.getTags()) {
         const [tagName, rest] = splitFirstChar(jsDocTag.getText().replaceAll('*', ''), ' ');
-        if (docMap[tagName]) {
-            docMap[tagName].push(splitFirstChar(rest, ' '));
-        } else {
-            docMap[tagName] = [splitFirstChar(rest, ' ')];
+        if(tagName === 'params') {
+            if (docMap[tagName]) {
+                docMap[tagName].push(splitFirstChar(rest, ' '));
+            } else {
+                docMap[tagName] = [splitFirstChar(rest, ' ')];
+            }
+        }else{
+            if (docMap[tagName]) {
+                docMap[tagName].push([rest]);
+            } else {
+                docMap[tagName] = [[rest]];
+            }
         }
     }
     return Object.keys(docMap).length ? docMap : null;

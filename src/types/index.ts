@@ -1,4 +1,13 @@
-export type TypeUnions = 'interface' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any';
+export type TypeUnions = 'interface' | 'object' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any';
+
+export interface InterfaceDetail {
+    [key:string]: {
+        value: TypeUnions,
+        isRequire: boolean,
+        isIndexSignature: boolean,
+        doc: Record<string, string[][]>
+    }
+}
 
 export type TypeDeclaration = {
     /** 类型名 */
@@ -10,20 +19,15 @@ export type TypeDeclaration = {
     type: TypeUnions,
     /** 是否位于全局 */
     isGlobal?: boolean,
-
+    /** 类型别名具体 */
+    typeValue?: string,
+    /** 类型别名详情 */
+    typeDetail?: TypeDeclaration,
     /** interface | enum */
-    interfaceDetail?: {
-        [key:string]: {
-            value: TypeUnions,
-            isRequire: boolean,
-            isIndexSignature: boolean,
-            link?: string,
-            doc: Record<string, string[][]>
-        }
-    },
+    interfaceDetail?: InterfaceDetail,
     /** array */
     arrayDetail?: TypeDeclaration,
-    /** union */
+    /** union|| intersection*/
     unionList?: TypeDeclaration[],
     /** intersection */
     intersectionList?: TypeDeclaration[]
@@ -81,6 +85,7 @@ export type FileItem = {
     functionList?: FunctionItem[]
     /** 类型列表 */
     typeList?: TypeDeclaration[]
+    /** 针对这个文件，复杂类型的链接 */
     link?: {
         /** 指向路径 */
         path: string,

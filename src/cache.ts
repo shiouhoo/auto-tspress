@@ -1,22 +1,29 @@
 import { TypeDeclaration } from './types';
+import { TypeObject } from './types/entity';
+import { shouldPushTypeList } from './utils/type/typeCheck';
 
 class CollectedTypeList {
-    collectedTypeList: TypeDeclaration[];
+    collectedTypeList: TypeObject[];
     constructor() {
         this.collectedTypeList = [];
     }
 
-    add(path:string, value: string, type: TypeDeclaration) {
-        if(!this.collectedTypeList.some((item)=> item.value === value && item.filePath === path)) {
-            this.collectedTypeList.push({
-                ...type,
-                filePath: path
-            });
+    addTypeObject(typeObject: TypeObject) {
+        if(!shouldPushTypeList(typeObject.type)) return;
+        if(!this.collectedTypeList.some((item)=> item.type.value === typeObject.type.value && item.type.filePath === typeObject.type.filePath)) {
+            this.collectedTypeList.push(typeObject);
+        }
+    }
+
+    add(value: string, path: string, type: TypeDeclaration, deps: TypeDeclaration[]) {
+        if(!this.collectedTypeList.some((item)=> item.type.value === value && item.type.filePath === path)) {
+            const typeObject = new TypeObject(type, deps);
+            this.collectedTypeList.push(typeObject);
         }
     }
 
     get(path:string, value: string) {
-        return this.collectedTypeList.find((item)=> item.value === value && item.filePath === path);
+        return this.collectedTypeList.find((item)=> item.type.value === value && item.type.filePath === path);
     }
 }
 

@@ -2,11 +2,13 @@ import { CollectMap, TypeDeclaration, FunctionItem } from '@/types';
 import { Project, FunctionDeclaration, Node } from 'ts-morph';
 import { collectFileDoc } from './collectDoc';
 import { collectFunction } from './collectFunc';
-import { getInterface } from './collectTypes';
+import { collectEnum, collectInterface, collectType } from './collectTypes';
 import { setReturnSymbol, config, tsMorph } from '@/global';
 // import { parseFileName } from '../fileUtils';
 import { judgeExportedDeclarationsIsFunction } from '../functionUtil';
 import { log } from '@/log';
+import { shouldPushTypeList } from '../type/typeCheck';
+import { filterTypeList } from '../type/typeParse';
 
 export function collect() {
 
@@ -37,6 +39,7 @@ export function collect() {
 
         tsMorph.sourchFile = sourceFile;
 
+        log.log('-----------------------');
         log.log('开始收集文件: ' + sourceFile.getBaseName());
 
         const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
@@ -52,45 +55,58 @@ export function collect() {
         const exportedDeclarations = sourceFile.getExportedDeclarations();
 
         for (const [name, declarations] of exportedDeclarations) {
-            console.log('Found default export:' + name);
             for (const declaration of declarations) {
                 // 判断是否是函数
                 if(judgeExportedDeclarationsIsFunction(declaration)) {
+                    log.log('✔ 找到函数：' + name);
                     const [funcItem, typeList] = collectFunction(declaration as FunctionDeclaration);
+                    // 防止名称为undefined
+                    funcItem.name ||= name + '(默认导出)';
                     if(funcItem.classify === 'utils') {
                         utilsFunctionList.push(funcItem);
                     }else{
                         hooksFunctionList.push(funcItem);
                     }
+                    // 收集link，跳转到类型详情
                     for(const t of typeList) {
-                        if(!['interface'].includes(t.type)) continue;
-                        if(t.isGlobal) {
-                            // TODO 全局path不对
-                            linkList.push({
-                                name: t.value,
-                                path: '#' + t.value.toLowerCase()
-                            });
-                            globalTypeList.push(t);
+                        if(!shouldPushTypeList(t)) continue;
+                        linkList.push({
+                            name: t.value,
+                            path: '#' + t.value.toLowerCase()
+                        });
+                        if(funcItem.classify === 'utils') {
+                            utilsTypeList.push(t);
                         }else{
-                            linkList.push({
-                                name: t.value,
-                                path: '#' + t.value.toLowerCase()
-                            });
-                            if(funcItem.classify === 'utils') {
-                                utilsTypeList.push(t);
-                            }else{
-                                hooksTypeList.push(t);
-                            }
+                            hooksTypeList.push(t);
                         }
                     }
-                }else if (Node.isTypeAliasDeclaration(declaration)) {
-                    console.log('The declaration is a type alias');
-                } else if (Node.isInterfaceDeclaration(declaration)) {
-                    console.log('The declaration is an interface');
-                    globalTypeList.push(...getInterface(declaration));
-                } else if (Node.isEnumDeclaration(declaration)) {
-                    console.log('The declaration is an enum');
+                // 类型收集
+                }else {
+                    const typeList = [];
+                    if (Node.isTypeAliasDeclaration(declaration)) {
+                        log.log('✔ 找到type：' + name);
+                        const { type, deps } = collectType(declaration);
+                        globalTypeList.push(type, ...deps);
+                        typeList.push(...deps);
+                    } else if (Node.isInterfaceDeclaration(declaration)) {
+                        log.log('✔ 找到interface：' + name);
+                        const { type, deps } = collectInterface(declaration);
+                        globalTypeList.push(type, ...deps);
+                        typeList.push(...deps);
+                    } else if (Node.isEnumDeclaration(declaration)) {
+                        log.log('✔ 找到enum：' + name);
+                        const { type, deps } = collectEnum(declaration);
+                        globalTypeList.push(type, ...deps);
+                        typeList.push(...deps);
+                    }
+                    for(const t of typeList) {
+                        linkList.push({
+                            name: t.value,
+                            path: '#' + t.value.toLowerCase()
+                        });
+                    }
                 }
+
             }
         }
 
@@ -99,7 +115,7 @@ export function collect() {
             filePath: sourceFile.getFilePath(),
             fileDoc: fileDocMap,
             functionList: utilsFunctionList,
-            typeList: utilsTypeList,
+            typeList: filterTypeList(utilsTypeList),
             link: linkList,
         });
 
@@ -108,7 +124,7 @@ export function collect() {
             filePath: sourceFile.getFilePath(),
             fileDoc: fileDocMap,
             functionList: hooksFunctionList,
-            typeList: hooksTypeList,
+            typeList: filterTypeList(hooksTypeList),
             link: linkList,
         });
 
@@ -116,7 +132,7 @@ export function collect() {
             name: sourceFile.getBaseName(),
             filePath: sourceFile.getFilePath(),
             fileDoc: fileDocMap,
-            typeList: globalTypeList,
+            typeList: filterTypeList(globalTypeList),
             link: linkList,
         });
 

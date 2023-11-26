@@ -120,6 +120,18 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
         // 函数
         mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数', false);
         // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
+        const globalTypeMap = {};
+        for(const t of fileItem.typeList.filter(item => item.isGlobal)) {
+            globalTypeMap[t.value] = t.filePath.split('/')?.slice(-2).join('-') + '.html';
+        }
+        if(Object.keys(globalTypeMap).length) {
+            for(const linkItem of fileItem.link) {
+                if(globalTypeMap[linkItem.name]) {
+                    linkItem.path = '/globalTypes/' + globalTypeMap[linkItem.name] + linkItem.path;
+                }
+            }
+        }
+
         for(const func of fileItem.functionList) {
             const funcName = func.name;
             mdCreator.createTitle(3, funcName);
@@ -131,22 +143,31 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
         }
     }
     // type
-    const funcTypeShow = ['utils', 'hooks'].includes(itemType) && fileItem.typeList.length;
+    const funcTypeShow = ['utils', 'hooks'].includes(itemType) && fileItem.typeList.filter(item=> !item.isGlobal).length;
     funcTypeShow && mdCreator.createTitle(2, '类型', false);
+    // 是否显示全局类型表格
     const globalTypeTableShow = itemType === 'globalTypes' && fileItem.typeList.length;
     if(funcTypeShow || globalTypeTableShow) {
         const typeList = fileItem.typeList;
         for(const type of typeList) {
+            // 全局类型在局部不显示
+            if(['utils', 'hooks'].includes(itemType) && type.isGlobal) continue;
+
             const typeName = type.value;
-            mdCreator.createTitle(3, typeName + ` <Badge type="tip" text=${type.type} />`);
-            mdCreator.createText(type.docs?.['comment']?.[0]?.[0]);
+            mdCreator.createTitle(3, typeName + `<Badge type="tip" text=${type.type} />`);
+            // TODO 暂时不考虑多个tag存在的情况
+            mdCreator.createText(type.docs?.['@description']?.[0]?.[0] || type.docs?.comment?.[0]?.[0], '描述');
             // type.generics && mdCreator.createDescText(type.generics, { tag: '泛型' });
-            if(type.type === 'record') {
-                mdCreator.createDescText('Record', { tag: '类型' });
-                mdCreator.createTsCode(`${type.value}`);
+            if(type.type === 'type') {
+                if(!type.typeDetail) {
+                    mdCreator.createTsCode(type.typeValue);
+                }else{
+                    mdCreator.createTypesTable(type.typeDetail, fileItem.link);
+                }
             }else{
-                mdCreator.createTypesTable(type);
+                mdCreator.createTypesTable(type, fileItem.link);
             }
+
         }
 
     }

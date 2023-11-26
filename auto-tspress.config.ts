@@ -1,10 +1,10 @@
 export default () => {
     return {
-        include: ['test/**/utils.ts'],
+        include: ['test/**/{axios.ts,utils.ts}'],
         exclude: [],
         debug: false,
         server: {
-            port: 5074,
+            port: 5073,
         }
     };
 };

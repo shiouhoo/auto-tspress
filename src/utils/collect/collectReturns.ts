@@ -1,6 +1,7 @@
 import { getTypeByMorphType } from '@/utils/type/typeObtain';
 import { FunctionDeclaration, Type, VariableDeclaration, ts, Node } from 'ts-morph';
 import { Returns, TypeDeclaration } from '@/types';
+import { getPushTypeList } from '@/utils/type/typeCheck';
 
 // 获取函数返回值
 export const getReturns = (
@@ -23,10 +24,10 @@ export const getReturns = (
     }
 
     if (returnType) {
-        const { type, dep } = getTypeByMorphType(returnType);
+        const { type, deps } = getTypeByMorphType(returnType);
         returns.type = type.type;
         returns.value = type.value;
-        typeList.push(type, ...dep);
+        typeList.push(...getPushTypeList(type, deps));
     }
     return { returns, typeList };
 };

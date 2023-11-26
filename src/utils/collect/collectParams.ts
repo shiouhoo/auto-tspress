@@ -2,6 +2,7 @@
 import { FunctionDeclaration, Type, VariableDeclaration, ts, Node, ParameterDeclaration } from 'ts-morph';
 import { Params, TypeDeclaration } from '@/types';
 import { getTypeByMorphType } from '@/utils/type/typeObtain';
+import { getPushTypeList } from '@/utils/type/typeCheck';
 
 // import { getTypeByText, isBaseType } from '../type/typeParse';
 // import { splitFirstChar } from '../stringUtil';
@@ -31,14 +32,13 @@ export const getParamsList = (
         };
 
         const paramType: Type<ts.Type> = param.getType();
-        const { type, dep } = getTypeByMorphType(paramType);
-
-        paramItem.type = type.type;
+        const { type, deps } = getTypeByMorphType(paramType);
+        paramItem.type = type.value;
 
         paramsList.push(paramItem);
-        typeList.push(type, ...dep);
-    }
+        typeList.push(...getPushTypeList(type, deps));
 
+    }
     return { paramsList, typeList };
 
     // const headerText: string = declaration.getText().split(lineSysbol)[0];

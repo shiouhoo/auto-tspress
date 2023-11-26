@@ -44,7 +44,7 @@ export class MdCreator {
         }
         this.content += escapeSpecialChars(text) + '<br />' + lineSysbol;
     }
-    // 创建代码块
+    // 创建描述文本
     createDescText(text: string | string[], { tag, light = 'all', joinChar = ', ' }: { tag?: string, light?: boolean[] | 'all', joinChar?: string }) {
         if (typeof text === 'string') {
             text = [text];
@@ -72,7 +72,7 @@ export class MdCreator {
     }
     // 创建文件说明
     createFileDoc(doc: Record<string, string>) {
-        log.logDebug('创建了一个文件说明：' + JSON.stringify(doc, null, 2));
+        log.logDebug('创建了一个文件说明：', doc);
         if (!doc) return;
         if (doc['@description']) {
             this.content += `- 描述：${escapeSpecialChars(doc['@description'])}` + lineSysbol;
@@ -102,8 +102,7 @@ export class MdCreator {
                 doc[item[0]] = item.slice(1, item.length).join(' ').replace(/^[- ]+/g, '');
             }
         }
-
-        log.logDebug('创建了一个参数表格：' + JSON.stringify(params, null, 2), 'doc依赖：' + JSON.stringify(doc, null, 2));
+        log.logDebug('创建了一个参数表格：' + params, 'doc依赖：', doc);
         this.content += `#### params参数` + lineSysbol;
         if (!params || !params.length) {
             this.content += `无` + lineSysbol;
@@ -111,7 +110,7 @@ export class MdCreator {
         }
         const props = [];
         for (const item of params) {
-            let typeValue: string = item.type;
+            let typeValue: string = item.type.replaceAll('<', '&lt;').replaceAll('>', '&gt');
             for (const linkItem of linkList || []) {
                 typeValue = typeValue.replaceAll(linkItem.name, `<a href="${linkItem.path}">${linkItem.name}</a>`);
             }
@@ -128,23 +127,31 @@ export class MdCreator {
         this.index++;
     }
     // 创建类型表格
-    createTypesTable(typeInfo: TypeDeclaration) {
-        if ((typeof typeInfo.value == 'string' && !typeInfo.value.length) || !Object.keys(typeInfo.value).length) {
+    createTypesTable(typeInfo: TypeDeclaration, linkList:{name:string, path:string}[]) {
+        if ((typeof typeInfo.value == 'string' && !typeInfo.value.length)) {
             this.content += `无` + lineSysbol;
             return;
         }
-        log.logDebug('创建了一个类型表格：' + JSON.stringify(typeInfo, null, 2));
+
+        log.logDebug('创建了一个类型表格：', typeInfo);
         const props = [];
         let tableData;
-        if ('interface' === typeInfo.type) {
+        // 只有interface和enum,object才有详情
+        if (['interface', 'enum', 'object'].includes(typeInfo.type)) {
             tableData = typeInfo.interfaceDetail;
+        }else{
+            return;
         }
 
-        for (const item in tableData) {
+        for (const item in tableData || []) {
+            let typeValue = tableData[item]?.value.replaceAll('<', '&lt;').replaceAll('>', '&gt') || '';
+            for (const linkItem of linkList || []) {
+                typeValue = typeValue.replaceAll(linkItem.name, `<a href="${linkItem.path}">${linkItem.name}</a>`);
+            }
             props.push({
                 name: item,
                 describe: tableData[item].doc?.['@description']?.[0]?.[0] || tableData[item].doc?.['comment']?.[0]?.[0] || '--',
-                type: tableData[item]?.value || '--',
+                type: typeValue || '--',
                 isIndexSignature: tableData[item]?.isIndexSignature,
                 isRequire: tableData[item].isRequire,
             });
