@@ -158,6 +158,9 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
             // TODO 暂时不考虑多个tag存在的情况
             mdCreator.createText(type.docs?.['@description']?.[0]?.[0] || type.docs?.comment?.[0]?.[0], '描述');
             // type.generics && mdCreator.createDescText(type.generics, { tag: '泛型' });
+            if(type.type === 'module') {
+                mdCreator.createDescText(type.filePath.split('node_modules/').slice(1).join(''), { tag: '模块' });
+            }
             if(type.type === 'type') {
                 if(!type.typeDetail) {
                     mdCreator.createTsCode(type.typeValue);

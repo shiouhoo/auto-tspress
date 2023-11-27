@@ -22,14 +22,15 @@ export const filterTypeList = (typeList: TypeDeclaration[]) => {
  * }
  */
 export const getValuePath = (type: string) => {
-    const value = type.startsWith('import') ? type.split('.')[1] : type;
+    const value = type.startsWith('import') ? type.split(').')[1] : type;
     // 取导入的路径，否则就是定义在当前文件
-    let path = type.startsWith('import') ? type.split('.')[0].slice(8, -2) : tsMorph.sourchFile.getFilePath();
+    let path = type.startsWith('import') ? type.split(').')[0].slice(8, -1) : tsMorph.sourchFile.getFilePath();
     if(!path.endsWith('.ts')) {
         path += '.ts';
     }
     return {
         path,
-        value
+        value,
+
     };
 };

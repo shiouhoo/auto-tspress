@@ -83,22 +83,20 @@ export function collect() {
                 // 类型收集
                 }else {
                     const typeList = [];
+                    let type;
+                    let deps;
                     if (Node.isTypeAliasDeclaration(declaration)) {
                         log.log('✔ 找到type：' + name);
-                        const { type, deps } = collectType(declaration);
-                        globalTypeList.push(type, ...deps);
-                        typeList.push(...deps);
+                        ({ type: type, deps } = collectType(declaration));
                     } else if (Node.isInterfaceDeclaration(declaration)) {
                         log.log('✔ 找到interface：' + name);
-                        const { type, deps } = collectInterface(declaration);
-                        globalTypeList.push(type, ...deps);
-                        typeList.push(...deps);
+                        ({ type, deps } = collectInterface(declaration));
                     } else if (Node.isEnumDeclaration(declaration)) {
                         log.log('✔ 找到enum：' + name);
-                        const { type, deps } = collectEnum(declaration);
-                        globalTypeList.push(type, ...deps);
-                        typeList.push(...deps);
+                        ({ type, deps = typeList } = collectEnum(declaration));
                     }
+                    globalTypeList.push(type, ...deps);
+                    typeList.push(...deps);
                     for(const t of typeList) {
                         linkList.push({
                             name: t.value,
@@ -135,41 +133,6 @@ export function collect() {
             typeList: filterTypeList(globalTypeList),
             link: linkList,
         });
-
-        // const { functionDeclarationMap, hooksDeclarationMap } = collectFunctions(sourceFile, { collectedTypeList });
-        // return;
-        // const { globalTargetTypes, globalFileTypes, fileType } = collectTypes(sourceFile, useTypes);
-        // const fileName = parseFileName(sourceFile.getBaseName());
-        // // hooks
-        // if(hooksDeclarationMap) {
-        //     collectMap.hooks[fileName] = {
-        //         value: hooksDeclarationMap,
-        //         types: Object.keys(fileType.hooks).length ? fileType.hooks : null,
-        //         fileDoc: fileDocMap,
-        //         useTypesFileMap: useTypes.typeToFileMap,
-        //     };
-        // }
-        // // utils
-        // if(functionDeclarationMap) {
-        //     collectMap.utils[fileName] = {
-        //         value: functionDeclarationMap,
-        //         types: Object.keys(fileType.util).length ? fileType.util : null,
-        //         fileDoc: fileDocMap,
-        //         useTypesFileMap: useTypes.typeToFileMap,
-        //     };
-        // }
-        // // globalTypes
-        // if(globalFileTypes) {
-        //     collectMap.globalTypes[fileName] = globalFileTypes;
-        // }
-        // if(globalTargetTypes) {
-        //     for(const fileName in globalTargetTypes) {
-        //         collectMap.globalTypes[fileName] = {
-        //             ...collectMap.globalTypes[fileName],
-        //             ...globalTargetTypes[fileName]
-        //         };
-        //     }
-        // }
     }
     return collectMap;
 }

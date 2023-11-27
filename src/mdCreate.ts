@@ -54,9 +54,9 @@ export class MdCreator {
         }
         for (let i = 0;i < text.length;i++) {
             if (light === 'all' || (light && light[i])) {
-                this.content += `\`${escapeSpecialChars(text[i])}\``;
+                this.content += `\`${text[i]}\``;
             } else {
-                this.content += escapeSpecialChars(text[i]);
+                this.content += text[i];
             }
             if (i !== text.length - 1) {
                 this.content += joinChar;

@@ -1,4 +1,4 @@
-export type TypeUnions = 'interface' | 'object' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any';
+export type TypeUnions = 'interface' | 'object' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any' | 'module';
 
 export interface InterfaceDetail {
     [key:string]: {

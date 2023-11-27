@@ -39,7 +39,7 @@ export function isBooleanLiteral(type: ts.Type): boolean {
 }
 
 export const shouldPushTypeList = (type: TypeDeclaration)=>{
-    return ['interface', 'object', 'enum', 'record', 'union', 'intersection', 'type'].includes(type.type) || ('array' === type.type && shouldPushTypeList(type.arrayDetail));
+    return ['interface', 'object', 'enum', 'record', 'union', 'intersection', 'type', 'module'].includes(type.type) || ('array' === type.type && shouldPushTypeList(type.arrayDetail));
 };
 
 export const shouldPushDeps = (type: TypeDeclaration)=>{
@@ -53,7 +53,7 @@ export const getPushTypeList = (type: TypeDeclaration, deps: TypeDeclaration[]) 
             result.push(type.arrayDetail);
         }
         // 以下类型本身不需要push到typeList
-        if(!['record', 'union', 'intersection', 'object', 'type'].includes(type.type)) {
+        if(!['record', 'union', 'intersection', 'object'].includes(type.type)) {
             result.push(type);
         }
         if('union' === type.type || 'intersection' === type.type) {
