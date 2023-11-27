@@ -12,9 +12,6 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"
   },
-  "auto-tspress": {
-    "dir": "test/**/*.ts"
-  },
   "bin": {
     "auto-tspress": "./lib/index.js"
   },
@@ -35,7 +32,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "commander": "^11.0.0",
     "element-plus": "^2.3.12",
     "ts-morph": "^19.0.0",
     "vitepress": "1.0.0-beta.7"

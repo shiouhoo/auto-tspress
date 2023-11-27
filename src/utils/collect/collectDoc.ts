@@ -1,6 +1,14 @@
-import { JSDoc, SourceFile } from 'ts-morph';
+import { JSDoc, SourceFile, ts } from 'ts-morph';
 import { lineSysbol } from '../../global';
 import { splitFirstChar } from '../stringUtil';
+
+export function collectDocByTsType(declaration: ts.Node) {
+    const doc = declaration.getChildren()[0] as ts.JSDoc;
+    if(doc && doc.kind === ts.SyntaxKind.JSDoc) {
+        return collectDocByTsDoc(doc);
+    }
+    return null;
+}
 
 // 收集jsDoc
 export function collectDoc(doc: JSDoc) {
@@ -9,6 +17,30 @@ export function collectDoc(doc: JSDoc) {
         comment: [[doc.getComment() as string || '']]
     };
     for (const jsDocTag of doc.getTags()) {
+        const [tagName, rest] = splitFirstChar(jsDocTag.getText().replaceAll('*', ''), ' ');
+        if(tagName === 'params') {
+            if (docMap[tagName]) {
+                docMap[tagName].push(splitFirstChar(rest, ' '));
+            } else {
+                docMap[tagName] = [splitFirstChar(rest, ' ')];
+            }
+        }else{
+            if (docMap[tagName]) {
+                docMap[tagName].push([rest]);
+            } else {
+                docMap[tagName] = [[rest]];
+            }
+        }
+    }
+    return Object.keys(docMap).length ? docMap : null;
+}
+// 收集jsDoc
+export function collectDocByTsDoc(doc: ts.JSDoc) {
+    if (!doc) return null;
+    const docMap: Record<string, string[][]> = {
+        comment: [[doc.comment as string || '']]
+    };
+    for (const jsDocTag of Array.from(doc.tags || [])) {
         const [tagName, rest] = splitFirstChar(jsDocTag.getText().replaceAll('*', ''), ' ');
         if (docMap[tagName]) {
             docMap[tagName].push(splitFirstChar(rest, ' '));

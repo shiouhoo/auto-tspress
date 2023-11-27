@@ -1,71 +1,89 @@
-/** 参数类型 */
-export type Params = {
-    name: string
-    type: string
-    isBase: boolean
-    isRequire: boolean,
-    defaultValue?: string
-}[]
+export type TypeUnions = 'interface' | 'object' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any' | 'module';
 
-/** 返回值类型 */
-export type Returns = {
-    type: string,
-    isBase: boolean
-}
-
-/** 一个函数的收集容器对象 */
-export type FunctionMap = Record<string, {
-    params: Params
-    returns: Returns
-    docs: Record<string, string[][]>
-}>
-
-/** TypeItem中的value项 */
-export interface TypeValue {
-    /**
-     * 属性名：{
-     *    value: 属性值,
-     *    doc: 注释
-     * }
-     */
-    [key: string]: {
-        value: string,
-        isRequire: boolean
-        doc: Record<string, string[][]>,
+export interface InterfaceDetail {
+    [key:string]: {
+        value: TypeUnions,
+        isRequire: boolean,
+        isIndexSignature: boolean,
+        doc: Record<string, string[][]>
     }
 }
 
-export interface TypeItem {
-    type: 'interface' | 'type' | 'enum' | 'any' | '未知'
-    value: TypeValue | string,
-    docs: Record<string, string[][]>
-    /** 针对type */
-    targetType?: 'object' | 'array' | 'string' | 'Record'
-    moduleName?: string,
-    generics?: string[]
+export type TypeDeclaration = {
+    /** 类型名 */
+    value: string,
+    /** 文件路径 */
+    filePath?: string,
+    /** 注解 */
+    docs?: Record<string, string[][]>,
+    type: TypeUnions,
+    /** 是否位于全局 */
+    isGlobal?: boolean,
+    /** 类型别名具体 */
+    typeValue?: string,
+    /** 类型别名详情 */
+    typeDetail?: TypeDeclaration,
+    /** interface | enum */
+    interfaceDetail?: InterfaceDetail,
+    /** array */
+    arrayDetail?: TypeDeclaration,
+    /** union|| intersection*/
+    unionList?: TypeDeclaration[],
+    /** intersection */
+    intersectionList?: TypeDeclaration[]
+    /** Record */
+    recordDetail?: {
+        key: string,
+        value: TypeDeclaration
+    }
 }
+
+/** 参数类型 */
+export type Params = {
+    /** 参数名 */
+    name: string
+    /** 只显示类型字面量 */
+    type: string,
+    isRequire: boolean,
+    defaultValue?: string
+}
+
+/** 参数类型 */
+export type Returns = TypeDeclaration
+/** 函数收集对象 */
+export type FunctionItem = {
+    /** 函数名 */
+    name: string,
+    /** 类别 */
+    classify: 'hooks' | 'utils'
+    /** 注解 */
+    docs?: Record<string, string[][]>,
+    params?: Params[]
+    returns: Returns
+}
+
 /** 一个文件的收集容器对象 */
-export type FileMap = {
-    types: Record<string, TypeItem>,
-    value: FunctionMap,
+export type FileItem = {
+    /** 文件名 */
+    name: string,
+    /** 文件路径 */
+    filePath: string,
+    /** 文件头注解 */
     fileDoc: Record<string, string>,
-    /** 记录特殊类型的文档位置 */
-    useTypesFileMap: Record<string, string>
+    /** 函数列表 */
+    functionList?: FunctionItem[]
+    /** 类型列表 */
+    typeList?: TypeDeclaration[]
+    /** 针对这个文件，复杂类型的链接 */
+    link?: {
+        /** 指向路径 */
+        path: string,
+        /** 类型名 */
+        name: string
+    }[],
 }
 export interface CollectMap {
-    /**
-     * 文件名：{
-     *     types:{},
-     *     value:{}
-     * }
-     */
-    hooks: Record<string, FileMap>,
-    utils: Record<string, FileMap>,
-    globalTypes: Record<string, Record<string, TypeItem>>
-}
-/** 用于收集函数中用到的类型 */
-export interface UseTypes{
-    util: Set<string>,
-    hooks: Set<string>,
-    typeToFileMap: Record<string, string>
+    hooks: FileItem[],
+    utils: FileItem[],
+    globalTypes: FileItem[]
 }

@@ -11,32 +11,14 @@
 
 # 使用
 
-### 1.全局安装
-如果使用淘宝源安装，可能不是最新的包，请确保为最新版本，可以使用npm官方源安装
+### 1.本地安装
+请确保为最新版本，推荐使用pnpm安装
 
 ```node
-npm i -g auto-tspress@latest
+pnpm i -D auto-tspress@latest
 ```
 
-进入一个项目目录，运行命令：
-
-```node
-auto-tspress -d "utils.ts"
-```
-
-### 2.  npx或pnpx
-
-进入一个项目目录，运行命令即可（npx不会在本地安装，所以每次都会下载最新的包，可能会等待一会，受不了的朋友可以全局安装）
-```npm
-npx auto-tspress -d "utils.ts"
-```
-###  3. 局部安装(推荐)
-
-进入你的项目，安装auto-tspress
-
-```ts
-pnpm i auto-tspress -D
-```
+###  2. 加入运行脚本
 
 然后在你的package.json加入以下命令
 
@@ -46,28 +28,27 @@ pnpm i auto-tspress -D
 }
 ```
 
-运行命令tspress即可使用(此script还未加入配置，尚不可使用)。
+###  3. 添加配置文件
 
-# 配置
+在你的项目路径中新建一个auto-tspress.config.ts，配置项如下所示：
 
-## package.json
-我们推荐使用局部安装的方式，在package.json中可以配置auto-tspress
-```ts
-"auto-tspress": {
-    "dir": "src/hooks/*.ts !main.ts",
-    "@": "src"
-},
+```js
+export default () => {
+    return {
+        // 要解析的文件路径,内部采用ts-morph解析，详情见：https://ts-morph.com/setup/adding-source-files#by-file-globs-or-file-paths
+        include: ['test/**/utils.ts'],
+        // 排除的文件路径
+        exclude: ['**/main.ts'],
+        // 是否开启debug模式，会打印文档生成过程中详细信息
+        debug: false,
+        // vitepress运行配置
+        server: {
+            // 运行端口
+            port: 5073,
+        }
+    };
+};
 ```
-## 命令行参数
-同样，在使用过程中，auto-tspress提供了多个命令支持运行，如果你不想在项目中安装auto-tspress就只能使用该方式。你的命令可能长这样：`auto-tspress -d "src/hooks/*.ts" -@ src`
-## 配置详情
-
-| 参数      | 说明                                                         | 必传 |
-| --------- | ------------------------------------------------------------ | ---- |
-| -d或--dir | 要解析的文件，支持通配符解析，如果有多个文件需要加上引号，如“utils/\*{.d.ts,.ts} index.ts”,如果你想包含整个文件夹，但是排除某个文件，可以使用!,如“src/\*\*/\*  !*/main.ts”。 | 是   |
-| -@ | 如果你的项目使用了路径别名请配置该参数，默认值为`src` | 否   |
-| -p或--port | 设置运行端口，默认值为`5073`（当端口占用时会自动加1） | 否   |
-| --print | 生成文档时是否输出文件信息，默认值为`false` | 否   |
 
 # tsdoc
 
@@ -77,7 +58,8 @@ tspress支持所有标准的tsdoc解析以及自定义tag解析，[@example | TS
 | ------------ | ------------------------------------------------------------ | --------------------------- |
 | @param       | 参数注释                                                     | @param id 这是id            |
 | @returns     | 函数返回注释                                                 | @returns 返回一个当前的时间 |
-| @description | 注释说明（该tag可以省略），可用于interface，enum，type关键字定义的类型，以及它们的内部键值对上 | 见下方                      |
+| @file        | 文件注释声明                                                 | 见下方                      |
+| @description | 注释说明（该tag可以省略），可用于interface，enum，type关键字定义的类型，以及它们的内部键值对上等等 | 见下方                      |
 
 ```ts
 /** 这是test接口 */
