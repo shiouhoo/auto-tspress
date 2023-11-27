@@ -9,6 +9,7 @@ import { filterTypeList, getValuePath } from './typeParse';
 import { log } from '@/log';
 import { splitFirstChar } from '../stringUtil';
 
+/** 获取Record类型 */
 export const getRecordByTsType = (type: ts.Type): {
     key:string, value: TypeDeclaration, deps: TypeDeclaration[]
 } => {
@@ -31,7 +32,7 @@ export const getRecordByTsType = (type: ts.Type): {
     }
     return result;
 };
-
+/** 根据InterfaceDeclaration获取接口详情 */
 export const getInterfaceDetailByDeclaration = (interfaceDeclaration: InterfaceDeclaration): {detail: InterfaceDetail, deps: TypeDeclaration[]} => {
     const result = {
         detail: {},
@@ -67,7 +68,7 @@ export const getInterfaceDetailByDeclaration = (interfaceDeclaration: InterfaceD
     }
     return result;
 };
-
+/** 根据ts内置类型获取接口详情 */
 export const getDetailTsInterface = (interfaceDeclaration: ts.InterfaceDeclaration): {detail: InterfaceDetail, deps: TypeDeclaration[]} => {
     const result = {
         detail: {},
@@ -105,7 +106,7 @@ export const getDetailTsInterface = (interfaceDeclaration: ts.InterfaceDeclarati
     }
     return result;
 };
-
+/** 获取类型 */
 export const getTypeByMorphType = (paramType: Type<ts.Type>): {
     type: TypeDeclaration,
     deps: TypeDeclaration[]
@@ -208,6 +209,7 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
     return result;
 };
 
+/** 根据ts内置类型获取类型 */
 export const getTypeByTsType = (paramType: ts.Type): {
     type: TypeDeclaration,
     deps: TypeDeclaration[]
@@ -373,6 +375,7 @@ export const getIntersectionDetailByTsType = (intersectionType: ts.IntersectionT
     return result;
 };
 
+/** 根据ts内置类型获取type中的object详情 */
 export const getObjectDetailByTsType = (objectType: ts.ObjectType): {detail: InterfaceDetail, deps: TypeDeclaration[]} =>{
     const result = {
         detail: {},
@@ -395,7 +398,7 @@ export const getObjectDetailByTsType = (objectType: ts.ObjectType): {detail: Int
     }
     return result;
 };
-
+/** 根据ts内置类型获取type详情 */
 export const getTypeDetailByDeclaration = (objectType: ts.TypeAliasDeclaration): {detail: TypeDeclaration, deps: TypeDeclaration[]} =>{
     const aliasType = splitFirstChar(objectType.getText(), '=');
     const result = {

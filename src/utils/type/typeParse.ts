@@ -31,6 +31,5 @@ export const getValuePath = (type: string) => {
     return {
         path,
         value,
-
     };
 };

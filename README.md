@@ -35,7 +35,7 @@ pnpm i -D auto-tspress@latest
 ```js
 export default () => {
     return {
-        // 要解析的文件路径
+        // 要解析的文件路径,内部采用ts-morph解析，详情见：https://ts-morph.com/setup/adding-source-files#by-file-globs-or-file-paths
         include: ['test/**/utils.ts'],
         // 排除的文件路径
         exclude: ['**/main.ts'],

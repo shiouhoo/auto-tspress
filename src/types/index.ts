@@ -62,17 +62,6 @@ export type FunctionItem = {
     returns: Returns
 }
 
-/** 类型收集对象 */
-// export interface TypeItem {
-//     /** 类型名 */
-//     name: string,
-//     /** 文件路径 */
-//     filePath: string,
-//     type: TypeDeclaration,
-//     docs: Record<string, string[][]>
-//     moduleName?: string,
-//     generics?: string[]
-// }
 /** 一个文件的收集容器对象 */
 export type FileItem = {
     /** 文件名 */

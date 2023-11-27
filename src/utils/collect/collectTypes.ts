@@ -5,7 +5,17 @@ import { filterTypeList, getValuePath } from '../type/typeParse';
 import { collectedTypeList } from '@/cache';
 import { collectDoc } from './collectDoc';
 import { splitFirstChar } from '../stringUtil';
+import { TypeObject } from '@/types/entity';
 
+/** 设置类型声明为全局 */
+const setTypeGlobal = (type: TypeObject)=>{
+    type.type.isGlobal = true;
+    for(const dep of type.deps) {
+        dep.isGlobal = true;
+    }
+};
+
+/** 获取interafce */
 export const collectInterface = (declaration: InterfaceDeclaration): {
     type: TypeDeclaration,
     deps: TypeDeclaration[]
@@ -14,10 +24,7 @@ export const collectInterface = (declaration: InterfaceDeclaration): {
     const { value, path } = getValuePath(declaration.getName());
     const tmp = collectedTypeList.get(path, value);
     if(tmp) {
-        tmp.type.isGlobal = true;
-        for(const dep of tmp.deps) {
-            dep.isGlobal = true;
-        }
+        setTypeGlobal(tmp);
         return tmp;
     }
 
@@ -33,6 +40,7 @@ export const collectInterface = (declaration: InterfaceDeclaration): {
     };
 };
 
+/** 获取enum */
 export const collectEnum = (declaration: EnumDeclaration): {
     type: TypeDeclaration,
     deps: TypeDeclaration[]
@@ -41,10 +49,7 @@ export const collectEnum = (declaration: EnumDeclaration): {
     const { value, path } = getValuePath(declaration.getName());
     const tmp = collectedTypeList.get(path, value);
     if(tmp) {
-        tmp.type.isGlobal = true;
-        for(const dep of tmp.deps) {
-            dep.isGlobal = true;
-        }
+        setTypeGlobal(tmp);
         return tmp;
     }
 
@@ -61,6 +66,7 @@ export const collectEnum = (declaration: EnumDeclaration): {
 
 };
 
+/** 获取别名类型 */
 export const collectType = (declaration: TypeAliasDeclaration): {
     type: TypeDeclaration,
     deps: TypeDeclaration[]
@@ -69,10 +75,7 @@ export const collectType = (declaration: TypeAliasDeclaration): {
     const { value, path } = getValuePath(declaration.getName());
     const tmp = collectedTypeList.get(path, value);
     if(tmp) {
-        tmp.type.isGlobal = true;
-        for(const dep of tmp.deps) {
-            dep.isGlobal = true;
-        }
+        setTypeGlobal(tmp);
         return tmp;
     }
 

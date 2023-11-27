@@ -1,7 +1,7 @@
 import { Type, ts } from 'ts-morph';
-import { tsMorph } from '@/global';
 import { TypeDeclaration } from '@/types';
 
+/** 获取类型的symbol类型 */
 const getAliasSymbol = (type: Type<ts.Type> | ts.Type): ts.Symbol => {
     let symbol: ts.Symbol = null;
     if(type instanceof Type) {
@@ -14,7 +14,7 @@ const getAliasSymbol = (type: Type<ts.Type> | ts.Type): ts.Symbol => {
 };
 
 /**
- *
+ * 判断类型是否是Record
  * @param type
  * @returns boolean
  */
@@ -32,20 +32,16 @@ export const tsTypeIsRecord = (type: Type<ts.Type> | ts.Type) => {
     return false;
 };
 
-export function isBooleanLiteral(type: ts.Type): boolean {
-    const typeChecker = tsMorph.typeChecker.compilerObject;
-    const typeStr = typeChecker.typeToString(type);
-    return typeStr === 'true' || typeStr === 'false' || typeStr === 'boolean';
-}
-
+/** 是否应该加入类型列表解析 */
 export const shouldPushTypeList = (type: TypeDeclaration)=>{
     return ['interface', 'object', 'enum', 'record', 'union', 'intersection', 'type', 'module'].includes(type.type) || ('array' === type.type && shouldPushTypeList(type.arrayDetail));
 };
 
+/** 是否应该加入依赖数组 */
 export const shouldPushDeps = (type: TypeDeclaration)=>{
     return ['interface', 'enum', 'type'].includes(type.type);
 };
-
+/** 根据类型声明以及依赖获取解析的类型列表 */
 export const getPushTypeList = (type: TypeDeclaration, deps: TypeDeclaration[]) => {
     const result = [];
     if(shouldPushTypeList(type)) {

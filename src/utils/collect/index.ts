@@ -4,7 +4,6 @@ import { collectFileDoc } from './collectDoc';
 import { collectFunction } from './collectFunc';
 import { collectEnum, collectInterface, collectType } from './collectTypes';
 import { setReturnSymbol, config, tsMorph } from '@/global';
-// import { parseFileName } from '../fileUtils';
 import { judgeExportedDeclarationsIsFunction } from '../functionUtil';
 import { log } from '@/log';
 import { shouldPushTypeList } from '../type/typeCheck';
