@@ -53,7 +53,7 @@ export const getPushTypeList = (type: TypeDeclaration, deps: TypeDeclaration[]) 
             result.push(type);
         }
         if('union' === type.type || 'intersection' === type.type) {
-            result.push(...type.unionList);
+            result.push(...type.unionList.filter((item) => shouldPushTypeList(item)));
         }
         result.push(...deps);
     }

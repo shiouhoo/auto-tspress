@@ -83,7 +83,7 @@ export function collect() {
                 }else {
                     const typeList = [];
                     let type;
-                    let deps;
+                    let deps = [];
                     if (Node.isTypeAliasDeclaration(declaration)) {
                         log.log('✔ 找到type：' + name);
                         ({ type: type, deps } = collectType(declaration));
@@ -94,7 +94,8 @@ export function collect() {
                         log.log('✔ 找到enum：' + name);
                         ({ type, deps = typeList } = collectEnum(declaration));
                     }
-                    globalTypeList.push(type, ...deps);
+                    type && globalTypeList.push(type);
+                    globalTypeList.push(...deps);
                     typeList.push(...deps);
                     for(const t of typeList) {
                         linkList.push({

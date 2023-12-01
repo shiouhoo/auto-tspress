@@ -184,10 +184,10 @@ export const createDocs = (collectMap: CollectMap) => {
 
         if (os.platform() === 'win32') {
             // Windows
-            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && vitepress dev docs --port ${config.server.port}`]);
+            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && npm run docs:dev --port ${config.server.port}`]);
         } else {
             // macOS 或 Linux
-            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && vitepress dev docs --port ${config.server.port}`]);
+            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && npm run docs:dev --port ${config.server.port}`]);
         }
 
         child.stdout.on('data', (data) => {
