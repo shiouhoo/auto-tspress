@@ -30,9 +30,12 @@ export class MdCreator {
         this.setup += str + lineSysbol;
     }
     // 创建标题
-    createTitle(level: 1 | 2 | 3 | 4 | 5 | 6, title: string, isLog = true) {
+    createTitle(level: 1 | 2 | 3 | 4 | 5 | 6, title: string, id?: string) {
         if (!title) return;
-        isLog && log.logDebug('创建了一个标题：' + title);
+        log.logDebug('创建了一个标题：' + title);
+        if(id) {
+            title += `{ #${id}}`;
+        }
         this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
     // 创建文本

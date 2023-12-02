@@ -3,7 +3,7 @@ import { Project, FunctionDeclaration, Node } from 'ts-morph';
 import { collectFileDoc } from './collectDoc';
 import { collectFunction } from './collectFunc';
 import { collectEnum, collectInterface, collectType } from './collectTypes';
-import { setReturnSymbol, config, tsMorph } from '@/global';
+import { setReturnSymbol, config, tsMorph, getUnNameType } from '@/global';
 import { judgeExportedDeclarationsIsFunction } from '../functionUtil';
 import { log } from '@/log';
 import { shouldPushTypeList } from '../type/typeCheck';
@@ -69,9 +69,12 @@ export function collect() {
                     // 收集link，跳转到类型详情
                     for(const t of typeList) {
                         if(!shouldPushTypeList(t)) continue;
+                        if(t.value.length > 20) {
+                            t.id = getUnNameType();
+                        }
                         linkList.push({
                             name: t.value,
-                            path: '#' + t.value.toLowerCase()
+                            path: '#' + t.id || t.value.toLowerCase()
                         });
                         if(funcItem.classify === 'utils') {
                             utilsTypeList.push(t);
@@ -98,9 +101,12 @@ export function collect() {
                     globalTypeList.push(...deps);
                     typeList.push(...deps);
                     for(const t of typeList) {
+                        if(t.value.length > 20) {
+                            t.id = getUnNameType();
+                        }
                         linkList.push({
                             name: t.value,
-                            path: '#' + t.value.toLowerCase()
+                            path: '#' + t.id || t.value.toLowerCase()
                         });
                     }
                 }

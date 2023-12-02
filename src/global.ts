@@ -11,6 +11,11 @@ const __filenameNew = fileURLToPath(import.meta.url);
 
 export const __dirnameNew = path.dirname(__filenameNew);
 
+export let unNameTypeIndex = 0;
+export const getUnNameType = () => {
+    return 'unnametype-' + unNameTypeIndex++;
+};
+
 // 根据系统返回对应文件系统的换行符
 export function setReturnSymbol(content: string) {
     if (content.includes('\r\n')) {

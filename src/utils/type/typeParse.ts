@@ -1,5 +1,7 @@
 import { tsMorph } from '@/global';
 import { TypeDeclaration } from '../../types';
+import { splitFirstChar } from '../stringUtil';
+import { Node, ts } from 'ts-morph';
 
 /** 过滤重复的类型 */
 export const filterTypeList = (typeList: TypeDeclaration[]) => {
@@ -31,5 +33,22 @@ export const getValuePath = (type: string) => {
     return {
         path,
         value,
+    };
+};
+
+/**
+ * 获取type关键字的定义的名称value，以及typeValue
+ * @param aliasDeclaration
+ * @returns
+ */
+export const getAliasValueByNode = (aliasDeclaration: Node<ts.Node>| ts.Node | undefined) =>{
+    if(!aliasDeclaration) return {
+        value: '',
+        typeValue: '',
+    };
+    const aliasType = splitFirstChar(aliasDeclaration?.getText() || '', '=');
+    return {
+        value: aliasType[0]?.replaceAll('type', '')?.replaceAll('export', '')?.trim() || '',
+        typeValue: aliasType[1]?.trim() || '',
     };
 };

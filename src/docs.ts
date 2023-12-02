@@ -118,8 +118,9 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
     mdCreator.createLinkNext();
     if(itemType === 'utils' || itemType === 'hooks') {
         // 函数
-        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数', false);
-        // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
+        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数');
+
+        // 全局类型的链接
         const globalTypeMap: Record<string, string> = {};
         for(const t of fileItem.typeList?.filter(item => item.isGlobal) || []) {
             globalTypeMap[t.value] = t.filePath?.split('/')?.slice(-2).join('-') + '.html';
@@ -137,14 +138,14 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
             mdCreator.createTitle(3, funcName);
             mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0], '描述');
             func.params && mdCreator.createParamsTable(func.params, fileItem.link, func.docs);
-            mdCreator.createTitle(4, '返回值', false);
+            mdCreator.createTitle(4, '返回值');
             mdCreator.createReturns(func.returns, fileItem.link);
             func.docs?.['@returns']?.[0]?.[0] && mdCreator.createText(func.docs?.['@returns']?.[0]?.[0] || '暂无', '返回值说明');
         }
     }
     // type
     const funcTypeShow = ['utils', 'hooks'].includes(itemType) && fileItem.typeList?.filter(item=> !item.isGlobal).length;
-    funcTypeShow && mdCreator.createTitle(2, '类型', false);
+    funcTypeShow && mdCreator.createTitle(2, '类型');
     // 是否显示全局类型表格
     const globalTypeTableShow = itemType === 'globalTypes' && fileItem.typeList?.length;
     if(funcTypeShow || globalTypeTableShow) {
@@ -153,11 +154,10 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
             // 全局类型在局部不显示
             if(['utils', 'hooks'].includes(itemType) && type.isGlobal) continue;
 
-            const typeName = type.value;
-            mdCreator.createTitle(3, typeName + `<Badge type="tip" text=${type.type} />`);
+            const typeName = type.value.replaceAll('\n', '').replaceAll('\r', '');
+            mdCreator.createTitle(3, typeName + `<Badge type="tip" text=${type.type} />`, type.id);
             // TODO 暂时不考虑多个tag存在的情况
             mdCreator.createText(type.docs?.['@description']?.[0]?.[0] || type.docs?.comment?.[0]?.[0], '描述');
-            // type.generics && mdCreator.createDescText(type.generics, { tag: '泛型' });
             if(type.type === 'module') {
                 mdCreator.createDescText((type.filePath || '').split('node_modules/').slice(1).join(''), { tag: '模块' });
             }

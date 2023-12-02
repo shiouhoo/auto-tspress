@@ -17,6 +17,8 @@ export type TypeDeclaration = {
     /** 注解 */
     docs?: Record<string, string[][]>,
     type: TypeUnions,
+    /** 文档中的id名 */
+    id?: string,
     /** 是否位于全局 */
     isGlobal?: boolean,
     /** 类型别名具体 */
