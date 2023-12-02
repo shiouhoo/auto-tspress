@@ -1,5 +1,5 @@
 /** 对象转字符串 */
-export const objectToString = (obj) => {
+export const objectToString = (obj: any): string => {
     if (Array.isArray(obj)) {
         // 如果是数组，递归处理数组元素
         const elements = obj.map(element => objectToString(element));

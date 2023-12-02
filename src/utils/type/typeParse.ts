@@ -3,7 +3,7 @@ import { TypeDeclaration } from '../../types';
 
 /** 过滤重复的类型 */
 export const filterTypeList = (typeList: TypeDeclaration[]) => {
-    const map = {};
+    const map:Record<string, boolean> = {};
     return typeList.filter((item)=> {
         if(!map[item.value + item.filePath]) {
             map[item.value + item.filePath] = true;

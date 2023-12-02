@@ -41,7 +41,7 @@ export function collect() {
         log.log('-----------------------');
         log.log('开始收集文件: ' + sourceFile.getBaseName());
 
-        const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
+        const fileDocMap: Record<string, string> | undefined = collectFileDoc(sourceFile);
 
         const utilsFunctionList: FunctionItem[] = [];
         const hooksFunctionList: FunctionItem[] = [];
@@ -81,9 +81,9 @@ export function collect() {
                     }
                 // 类型收集
                 }else {
-                    const typeList = [];
+                    const typeList: TypeDeclaration[] = [];
                     let type;
-                    let deps = [];
+                    let deps: TypeDeclaration[] = [];
                     if (Node.isTypeAliasDeclaration(declaration)) {
                         log.log('✔ 找到type：' + name);
                         ({ type: type, deps } = collectType(declaration));

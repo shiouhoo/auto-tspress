@@ -73,7 +73,7 @@ export const tsMorph : {
     sourchFile: SourceFile,
     typeChecker: TypeChecker,
 } = {
-    project: null,
-    typeChecker: null,
-    sourchFile: null
+    project: {} as any,
+    typeChecker: {} as any,
+    sourchFile: {} as any,
 };

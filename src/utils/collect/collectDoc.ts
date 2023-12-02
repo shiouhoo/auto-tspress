@@ -7,12 +7,12 @@ export function collectDocByTsType(declaration: ts.Node) {
     if(doc && doc.kind === ts.SyntaxKind.JSDoc) {
         return collectDocByTsDoc(doc);
     }
-    return null;
+    return undefined;
 }
 
 // 收集jsDoc
 export function collectDoc(doc: JSDoc) {
-    if (!doc) return null;
+    if (!doc) return undefined;
     const docMap: Record<string, string[][]> = {
         comment: [[doc.getComment() as string || '']]
     };
@@ -32,11 +32,11 @@ export function collectDoc(doc: JSDoc) {
             }
         }
     }
-    return Object.keys(docMap).length ? docMap : null;
+    return Object.keys(docMap).length ? docMap : undefined;
 }
 // 收集jsDoc
 export function collectDocByTsDoc(doc: ts.JSDoc) {
-    if (!doc) return null;
+    if (!doc) return undefined;
     const docMap: Record<string, string[][]> = {
         comment: [[doc.comment as string || '']]
     };
@@ -48,7 +48,7 @@ export function collectDocByTsDoc(doc: ts.JSDoc) {
             docMap[tagName] = [splitFirstChar(rest, ' ')];
         }
     }
-    return Object.keys(docMap).length ? docMap : null;
+    return Object.keys(docMap).length ? docMap : undefined;
 }
 
 // 收集文件注释
@@ -63,5 +63,5 @@ export const collectFileDoc = (sourceFile: SourceFile) => {
             fileDocMap[tagName] = rest.join();
         }
     }
-    return Object.keys(fileDocMap).length ? fileDocMap : null;
+    return Object.keys(fileDocMap).length ? fileDocMap : undefined;
 };

@@ -5,7 +5,7 @@ export interface InterfaceDetail {
         value: TypeUnions,
         isRequire: boolean,
         isIndexSignature: boolean,
-        doc: Record<string, string[][]>
+        doc?: Record<string, string[][]>
     }
 }
 
@@ -69,7 +69,7 @@ export type FileItem = {
     /** 文件路径 */
     filePath: string,
     /** 文件头注解 */
-    fileDoc: Record<string, string>,
+    fileDoc?: Record<string, string>,
     /** 函数列表 */
     functionList?: FunctionItem[]
     /** 类型列表 */

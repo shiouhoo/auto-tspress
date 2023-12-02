@@ -11,7 +11,7 @@ export const getReturns = (
         value: '',
         type: 'any'
     };
-    let returnType: Type<ts.Type> = null;
+    let returnType: Type<ts.Type> | undefined;
     const typeList: TypeDeclaration[] = [];
 
     if (Node.isVariableDeclaration(declaration)) {
