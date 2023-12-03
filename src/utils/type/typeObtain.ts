@@ -355,7 +355,6 @@ export const getIntersectionDetailByTsType = (intersectionType: ts.IntersectionT
     };
     for(const type of intersectionType?.types || []) {
         const { type: unionItem, deps } = getTypeByTsType(type);
-        console.log(unionItem);
         result.unionList.push(unionItem);
         result.deps.push(...getPushTypeList(unionItem, deps));
     }

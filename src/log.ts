@@ -17,7 +17,7 @@ class Log {
                 }
                 str += itemStr + ',';
             }catch(err) {
-                console.log('存在唤醒依赖，使用console.log');
+                console.log('存在环形依赖，使用console.log');
                 console.log(strArr[i]);
             }
         }
