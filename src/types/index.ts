@@ -1,11 +1,11 @@
-export type TypeUnions = 'interface' | 'object' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any' | 'module';
+export type TypeUnions = 'interface' | 'record' | 'type' | 'enum' | 'union' | 'intersection' | 'number' | 'string' | 'boolean' | 'array' | 'any' | 'module';
 
 export interface InterfaceDetail {
     [key:string]: {
         value: TypeUnions,
         isRequire: boolean,
         isIndexSignature: boolean,
-        doc: Record<string, string[][]>
+        doc?: Record<string, string[][]>
     }
 }
 
@@ -17,6 +17,8 @@ export type TypeDeclaration = {
     /** 注解 */
     docs?: Record<string, string[][]>,
     type: TypeUnions,
+    /** 文档中的id名 */
+    id?: string,
     /** 是否位于全局 */
     isGlobal?: boolean,
     /** 类型别名具体 */
@@ -69,7 +71,7 @@ export type FileItem = {
     /** 文件路径 */
     filePath: string,
     /** 文件头注解 */
-    fileDoc: Record<string, string>,
+    fileDoc?: Record<string, string>,
     /** 函数列表 */
     functionList?: FunctionItem[]
     /** 类型列表 */

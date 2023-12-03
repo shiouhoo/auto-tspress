@@ -17,6 +17,9 @@ const init = async () => {
         const project = new Project();
         const sourceFile = project.addSourceFileAtPath(configPath);
         const defaultExportSymbol = sourceFile.getDefaultExportSymbol();
+        if(!defaultExportSymbol) {
+            throw new ConfigError('config文件必须导出一个默认的函数');
+        }
         const declaration = defaultExportSymbol.getDeclarations()[0];
 
         if (declaration && Node.isExportAssignment(declaration)) {

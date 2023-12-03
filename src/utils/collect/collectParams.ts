@@ -22,9 +22,9 @@ export const getParamsList = (
 
         const paramItem: Params = {
             name: param.getName(),
-            type: null,
+            type: '',
             isRequire: !param.isOptional(),
-            defaultValue: param.getInitializer() ? param.getInitializer().getText() : ''
+            defaultValue: param.getInitializer() ? param.getInitializer()?.getText() : ''
         };
 
         const paramType: Type<ts.Type> = param.getType();
@@ -33,7 +33,6 @@ export const getParamsList = (
 
         paramsList.push(paramItem);
         typeList.push(...getPushTypeList(type, deps));
-
     }
     return { paramsList, typeList };
 };

@@ -5,9 +5,8 @@ import { tsTypeIsRecord, getPushTypeList } from './typeCheck';
 import { collectedTypeList } from '@/cache';
 import { collectDoc, collectDocByTsDoc, collectDocByTsType } from '../collect/collectDoc';
 import { TypeObject } from '@/types/entity';
-import { filterTypeList, getValuePath } from './typeParse';
+import { filterTypeList, getAliasValueByNode, getValuePath } from './typeParse';
 import { log } from '@/log';
-import { splitFirstChar } from '../stringUtil';
 
 /** 获取Record类型 */
 export const getRecordByTsType = (type: ts.Type): {
@@ -17,8 +16,8 @@ export const getRecordByTsType = (type: ts.Type): {
 
     const result = {
         key: '',
-        value: null,
-        deps: []
+        value: {} as TypeDeclaration,
+        deps: [] as TypeDeclaration[]
     };
 
     const typeArguments = type.aliasTypeArguments;
@@ -35,17 +34,16 @@ export const getRecordByTsType = (type: ts.Type): {
 /** 根据InterfaceDeclaration获取接口详情 */
 export const getInterfaceDetailByDeclaration = (interfaceDeclaration: InterfaceDeclaration): {detail: InterfaceDetail, deps: TypeDeclaration[]} => {
     const result = {
-        detail: {},
-        deps: []
+        detail: {} as InterfaceDetail,
+        deps: [] as TypeDeclaration[]
     };
     for(const member of interfaceDeclaration.getProperties()) {
 
         const typeNode = tsMorph.typeChecker.getTypeAtLocation(member);
         const { type, deps } = getTypeByMorphType(typeNode);
         result.deps.push(...getPushTypeList(type, deps));
-
         result.detail[member.getName()] = {
-            value: member.getTypeNode()?.getText(),
+            value: (member.getTypeNode()?.getText() || '') as TypeUnions,
             isRequire: !member.hasQuestionToken(),
             isIndexSignature: false,
             doc: collectDoc(member.getJsDocs()[0])
@@ -60,7 +58,7 @@ export const getInterfaceDetailByDeclaration = (interfaceDeclaration: InterfaceD
         result.deps.push(...getPushTypeList(type, deps));
 
         result.detail[indexSignature.getType().getText()] = {
-            value: indexSignature.getReturnType().getText(),
+            value: (indexSignature.getReturnType().getText() || '') as TypeUnions,
             isRequire: false,
             isIndexSignature: true,
             doc: collectDoc(indexSignature.getJsDocs()[0])
@@ -71,8 +69,8 @@ export const getInterfaceDetailByDeclaration = (interfaceDeclaration: InterfaceD
 /** 根据ts内置类型获取接口详情 */
 export const getDetailTsInterface = (interfaceDeclaration: ts.InterfaceDeclaration): {detail: InterfaceDetail, deps: TypeDeclaration[]} => {
     const result = {
-        detail: {},
-        deps: []
+        detail: {} as InterfaceDetail,
+        deps: [] as TypeDeclaration[]
     };
     for(const member of interfaceDeclaration.members) {
         // TODO 一般来说是第一个子节点，但是有可能不是JSDoc
@@ -83,21 +81,21 @@ export const getDetailTsInterface = (interfaceDeclaration: ts.InterfaceDeclarati
             doc = null;
         }
         if(ts.isPropertySignature(member) || ts.isIndexSignatureDeclaration(member)) {
-            const typeNode = tsMorph.typeChecker.compilerObject.getTypeAtLocation(member.type);
+            const typeNode = tsMorph.typeChecker.compilerObject.getTypeAtLocation(member.type!);
             const { type, deps } = getTypeByTsType(typeNode);
             result.deps.push(...getPushTypeList(type, deps));
 
         }
         if(ts.isPropertySignature(member)) {
             result.detail[member.name.getText()] = {
-                value: member.type.getText(),
+                value: (member.type?.getText() || '') as TypeUnions,
                 isIndexSignature: false,
                 isRequire: !member.questionToken,
                 doc
             };
         }else if(ts.isIndexSignatureDeclaration(member)) {
-            result[member.parameters[0].type.getText()] = {
-                value: member.type.getText(),
+            result.detail[member.parameters[0].type?.getText() || ''] = {
+                value: (member.type?.getText() || '') as TypeUnions,
                 isIndexSignature: true,
                 isRequire: true,
                 doc
@@ -119,7 +117,7 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
         return tmp;
     }
 
-    const result = new TypeObject(null, []);
+    const result = new TypeObject({} as TypeDeclaration, []);
 
     let type: TypeDeclaration = {
         value,
@@ -135,12 +133,6 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
             type.type = 'number';
         }else if(paramType.isBoolean()) {
             type.type = 'boolean';
-        }else if(paramType.isObject() && !paramType.isClassOrInterface()) {
-            type.type = 'object';
-            const objectType = paramType.compilerType as ts.ObjectType;
-            const { detail, deps } = getObjectDetailByTsType(objectType);
-            type.interfaceDetail = detail;
-            result.deps.push(...filterTypeList(deps));
         }else if (paramType.isArray()) {
             type.type = 'array';
             const typeArguments = paramType.getTypeArguments();
@@ -164,7 +156,7 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
             type.type = 'interface';
             const interfaceType = paramType.compilerType;
             // 获取interface键值
-            const declaration = interfaceType.getSymbol().declarations[0] as ts.InterfaceDeclaration;
+            const declaration = interfaceType.getSymbol()?.declarations?.[0] as ts.InterfaceDeclaration;
             type.docs = collectDocByTsType(declaration);
             const { detail, deps } = getDetailTsInterface(declaration);
             type.interfaceDetail = detail;
@@ -172,7 +164,7 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
 
         }else if (paramType.isEnum() || paramType.isEnumLiteral()) {
             type.type = 'enum';
-            const declaration = paramType.compilerType.getSymbol().declarations[0] as ts.EnumDeclaration;
+            const declaration = paramType.compilerType.getSymbol()?.declarations?.[0] as ts.EnumDeclaration;
             let enumDeclaration = declaration;
             if (ts.isEnumMember(declaration)) {
                 enumDeclaration = (declaration as ts.EnumMember).parent;
@@ -189,15 +181,17 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
         }
         // 别名会被其他类型识别成功，所以需要放在最后
         if(paramType.getAliasSymbol() !== undefined) {
-        // 获取别名的类型
-            const aliasDeclaration = paramType.getAliasSymbol().getDeclarations()[0];
-            const aliasType = splitFirstChar(aliasDeclaration.getText(), '=');
+            // 获取别名的类型
+            const aliasDeclaration = paramType.compilerType.symbol.declarations?.[0] as ts.TypeAliasDeclaration;
+            const { value, typeValue } = getAliasValueByNode(aliasDeclaration);
+            const { detail, deps } = getTypeDetailByDeclaration(aliasDeclaration!);
+            result.deps.push(...filterTypeList(deps));
             type = {
-                value: aliasType[0]?.replace('type', '')?.replace('export', '')?.trim() || '',
-                typeValue: aliasType[1] || '',
+                value,
+                typeValue,
                 type: 'type',
-                typeDetail: type,
                 filePath: path,
+                typeDetail: detail
             };
         }
     }else{
@@ -219,7 +213,6 @@ export const getTypeByTsType = (paramType: ts.Type): {
     const typeFlags = paramType.flags;
     /** 类型字面量 */
     let value = typeChecker.typeToString(paramType);
-
     const { value: typeValue, path } = getValuePath(value);
 
     // 从缓存中获取类型对象
@@ -227,7 +220,7 @@ export const getTypeByTsType = (paramType: ts.Type): {
     if(tmp) {
         return tmp;
     }
-    const result = new TypeObject(null, []);
+    const result = new TypeObject({} as TypeDeclaration, []);
     let type: TypeDeclaration = {
         value: typeValue,
         type: 'any',
@@ -239,14 +232,11 @@ export const getTypeByTsType = (paramType: ts.Type): {
 
         if(typeFlags & ts.TypeFlags.StringLiteral || typeFlags & ts.TypeFlags.String) {
             type.type = 'string';
-        }
-        if(typeFlags & ts.TypeFlags.NumberLiteral || typeFlags & ts.TypeFlags.Number) {
+        }else if(typeFlags & ts.TypeFlags.NumberLiteral || typeFlags & ts.TypeFlags.Number) {
             type.type = 'number';
-        }
-        if(typeFlags & ts.TypeFlags.BooleanLiteral || typeFlags & ts.TypeFlags.Boolean) {
+        }else if(typeFlags & ts.TypeFlags.BooleanLiteral || typeFlags & ts.TypeFlags.Boolean) {
             type.type = 'boolean';
-        }
-        if (typeChecker.isArrayType(paramType)) {
+        }else if (typeChecker.isArrayType(paramType)) {
             type.type = 'array';
             const typeArguments = typeChecker.getTypeArguments(paramType as ts.TypeReference);
             if (typeArguments.length > 0) {
@@ -255,8 +245,7 @@ export const getTypeByTsType = (paramType: ts.Type): {
                 type.arrayDetail = itemType;
                 result.deps.push(...getPushTypeList(itemType, deps));
             }
-        }
-        if (value.startsWith('Record<')) {
+        }else if (value.startsWith('Record<')) {
             type.type = 'record';
             const { key, value: itemType, deps } = getRecordByTsType(paramType);
             type.recordDetail = {
@@ -264,17 +253,15 @@ export const getTypeByTsType = (paramType: ts.Type): {
                 value: itemType
             };
             result.deps.push(...getPushTypeList(itemType, deps));
-        }
-        if((typeFlags & ts.TypeFlags.Union) || (typeFlags & ts.TypeFlags.Intersection)) {
+        }else if((typeFlags & ts.TypeFlags.Union) || (typeFlags & ts.TypeFlags.Intersection)) {
             const isUnion = typeFlags & ts.TypeFlags.Union;
             type.type = isUnion ? 'union' : 'intersection';
             const { unionList, deps } = isUnion ? getUnionDetailByTsType(paramType as ts.UnionType) : getIntersectionDetailByTsType(paramType as ts.IntersectionType);
             type.unionList = unionList;
             result.deps.push(...filterTypeList(deps));
-        }
-        if (paramType.isClassOrInterface()) {
+        }else if (paramType.isClassOrInterface()) {
         // 获取interfaceDeclaration
-            const declaration = paramType.getSymbol().getDeclarations()[0];
+            const declaration = paramType.getSymbol()?.getDeclarations()?.[0];
             if(declaration && ts.isInterfaceDeclaration(declaration)) {
                 type.type = 'interface';
                 type.docs = collectDocByTsType(declaration);
@@ -282,6 +269,19 @@ export const getTypeByTsType = (paramType: ts.Type): {
                 type.interfaceDetail = detail;
                 result.deps.push(...filterTypeList(deps));
             }
+        }else if(typeFlags & ts.SymbolFlags.TypeAlias) {
+            // 获取别名的类型
+            const aliasDeclaration = paramType.symbol.declarations?.[0] as ts.TypeAliasDeclaration;
+            const { detail, deps } = getTypeDetailByDeclaration(aliasDeclaration);
+            result.deps.push(...filterTypeList(deps));
+            const { typeValue } = getAliasValueByNode(aliasDeclaration);
+            type = {
+                ...type,
+                typeValue,
+                type: 'type',
+                filePath: path,
+                typeDetail: detail
+            };
         }
         if (typeFlags & ts.TypeFlags.EnumLike || typeFlags & ts.TypeFlags.EnumLiteral) {
             if(value.includes('.')) {
@@ -290,24 +290,10 @@ export const getTypeByTsType = (paramType: ts.Type): {
             }
             paramType = paramType as ts.EnumType;
             type.type = 'enum';
-            const declaration = paramType.getSymbol().declarations[0] as ts.EnumDeclaration;
+            const declaration = paramType.getSymbol()?.declarations?.[0] as ts.EnumDeclaration;
             type.docs = collectDocByTsType(declaration);
             const { detail } = getEnumDetailByDeclaration(declaration);
             type.interfaceDetail = detail;
-        }
-        if((typeFlags & ts.SymbolFlags.TypeAlias) && !paramType.isClassOrInterface()) {
-        // 获取别名的类型
-            const aliasDeclaration = paramType.aliasSymbol.declarations[0] as ts.TypeAliasDeclaration;
-            const { detail, deps } = getTypeDetailByDeclaration(aliasDeclaration);
-            result.deps.push(...filterTypeList(deps));
-            const aliasType = splitFirstChar(aliasDeclaration.getText(), '=');
-            type = {
-                value: aliasType[0]?.replace('type', '')?.replace('export', '')?.trim() || '',
-                typeValue: aliasType[1] || '',
-                type: 'type',
-                filePath: path,
-                typeDetail: detail
-            };
         }
     }
 
@@ -319,8 +305,8 @@ export const getTypeByTsType = (paramType: ts.Type): {
 /** 获取enum类型 */
 export const getEnumDetailByDeclaration = (enumDeclaration: ts.EnumDeclaration): {detail: InterfaceDetail, deps: TypeDeclaration[]} =>{
     const result = {
-        detail: {},
-        deps: []
+        detail: {} as InterfaceDetail,
+        deps: [] as TypeDeclaration[]
     };
     // 当枚举个数只有一个时，需要获取父级枚举
     for(const member of enumDeclaration.members || (enumDeclaration?.parent as ts.EnumDeclaration)?.members || []) {
@@ -337,7 +323,7 @@ export const getEnumDetailByDeclaration = (enumDeclaration: ts.EnumDeclaration):
         }
         // TODO 枚举值不考虑复合类型
         result.detail[member.name.getText()] = {
-            value: member?.initializer?.getText() || '',
+            value: (member?.initializer?.getText() || '') as TypeUnions,
             isIndexSignature: false,
             isRequire: true,
             doc
@@ -349,8 +335,8 @@ export const getEnumDetailByDeclaration = (enumDeclaration: ts.EnumDeclaration):
 /** 获取union类型 */
 export const getUnionDetailByTsType = (unionType: ts.UnionType): {unionList: TypeDeclaration[], deps: TypeDeclaration[]} =>{
     const result = {
-        unionList: [],
-        deps: []
+        unionList: [] as TypeDeclaration[],
+        deps: [] as TypeDeclaration[]
     };
     // 当联合类型有枚举时，会把每一个枚举值都当做一个联合类型
     for(const type of unionType?.types || []) {
@@ -364,70 +350,54 @@ export const getUnionDetailByTsType = (unionType: ts.UnionType): {unionList: Typ
 /** 获取intersection类型 */
 export const getIntersectionDetailByTsType = (intersectionType: ts.IntersectionType): {unionList: TypeDeclaration[], deps: TypeDeclaration[]} =>{
     const result = {
-        unionList: [],
-        deps: []
+        unionList: [] as TypeDeclaration[],
+        deps: [] as TypeDeclaration[]
     };
     for(const type of intersectionType?.types || []) {
         const { type: unionItem, deps } = getTypeByTsType(type);
+        console.log(unionItem);
         result.unionList.push(unionItem);
         result.deps.push(...getPushTypeList(unionItem, deps));
     }
     return result;
 };
 
-/** 根据ts内置类型获取type中的object详情 */
-export const getObjectDetailByTsType = (objectType: ts.ObjectType): {detail: InterfaceDetail, deps: TypeDeclaration[]} =>{
-    const result = {
-        detail: {},
-        deps: []
-    };
-    const objectDeclaration = objectType.getSymbol().declarations[0] as ts.TypeLiteralNode;
-    for(const member of objectDeclaration?.members || []) {
-        if(ts.isPropertySignature(member)) {
-            const typeNode = tsMorph.typeChecker.compilerObject.getTypeAtLocation(member.type);
-            const { type, deps } = getTypeByTsType(typeNode);
-            result.deps.push(...getPushTypeList(type, deps));
-
-            result.detail[member.name.getText()] = {
-                value: member.type.getText(),
-                isIndexSignature: false,
-                isRequire: !member.questionToken,
-            };
-
-        }
-    }
-    return result;
-};
 /** 根据ts内置类型获取type详情 */
-export const getTypeDetailByDeclaration = (objectType: ts.TypeAliasDeclaration): {detail: TypeDeclaration, deps: TypeDeclaration[]} =>{
-    const aliasType = splitFirstChar(objectType.getText(), '=');
+export const getTypeDetailByDeclaration = (objectType: ts.Declaration): {detail: TypeDeclaration, deps: TypeDeclaration[]} =>{
+    const { value } = getAliasValueByNode(objectType);
     const result = {
         detail: {
-            value: aliasType[0].replace('type', '').replace('export', '').trim() || '',
+            value,
             type: 'any' as TypeUnions,
-            interfaceDetail: {}
+            interfaceDetail: {} as InterfaceDetail,
         },
-        deps: []
+        deps: [] as TypeDeclaration[]
     };
-    const objectDeclaration = objectType.type;
+    const objectDeclaration = objectType;
     if(objectDeclaration.kind === ts.SyntaxKind.TypeLiteral) {
-        result.detail.type = 'object';
+        result.detail.type = 'type';
         for(const member of (objectDeclaration as any)?.members || []) {
             if(ts.isPropertySignature(member)) {
-                const typeNode = tsMorph.typeChecker.compilerObject.getTypeAtLocation(member.type);
+                let doc: any = member.getChildren()[0] as ts.JSDoc;
+                if(doc.kind === ts.SyntaxKind.JSDoc) {
+                    doc = collectDocByTsDoc(doc);
+                }else{
+                    doc = null;
+                }
+
+                const typeNode = tsMorph.typeChecker.compilerObject.getTypeAtLocation(member.type!);
                 const { type, deps } = getTypeByTsType(typeNode);
                 result.deps.push(...getPushTypeList(type, deps));
 
                 result.detail.interfaceDetail[member.name.getText()] = {
-                    value: member.type.getText(),
+                    value: (member.type?.getText() || '') as TypeUnions,
                     isIndexSignature: false,
+                    doc,
                     isRequire: !member.questionToken,
                 };
 
             }
         }
-    }else{
-        result.detail = null;
     }
     return result;
 };

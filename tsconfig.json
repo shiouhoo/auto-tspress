@@ -5,7 +5,9 @@
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
         "outDir": "./lib",
+        "strict": true,
         "resolveJsonModule": true,
+        "strictNullChecks": true,
         "baseUrl": ".",
         "paths": {
             "@/*": [

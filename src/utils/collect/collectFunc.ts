@@ -27,10 +27,10 @@ export function collectFunction(functionDeclaration: FunctionDeclaration | Varia
     }
 
     return [{
-        name: functionDeclaration.getName(),
+        name: functionDeclaration.getName() || '',
         params: paramsList,
         returns,
-        docs: collectDoc(jsDocs),
+        docs: jsDocs ? collectDoc(jsDocs) : undefined,
         // 默认导出是，名称为undefined
         classify: functionDeclaration.getName()?.startsWith('use') ? 'hooks' : 'utils',
     }, filterTypeList([...typeList, ...typeList1])];

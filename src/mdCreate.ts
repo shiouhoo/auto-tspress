@@ -30,13 +30,16 @@ export class MdCreator {
         this.setup += str + lineSysbol;
     }
     // 创建标题
-    createTitle(level: 1 | 2 | 3 | 4 | 5 | 6, title: string, isLog = true) {
+    createTitle(level: 1 | 2 | 3 | 4 | 5 | 6, title: string, id?: string) {
         if (!title) return;
-        isLog && log.logDebug('创建了一个标题：' + title);
+        log.logDebug('创建了一个标题：' + title);
+        if(id) {
+            title += `{ #${id}}`;
+        }
         this.content += '#'.repeat(level) + ' ' + title + lineSysbol;
     }
     // 创建文本
-    createText(text: string, tag?: string) {
+    createText(text?: string, tag?: string) {
         if (!text) return;
         log.logDebug('创建了一段文本：' + text);
         if (tag) {
@@ -85,7 +88,7 @@ export class MdCreator {
         }
     }
     // 创建返回类型
-    createReturns(type: Returns, linkList:{name:string, path:string}[]) {
+    createReturns(type: Returns, linkList?:{name:string, path:string}[]) {
         const typeText = '返回类型';
         log.logDebug(`创建了${typeText}：` + type.value);
         let value = escapeSpecialChars(type.value);
@@ -95,8 +98,8 @@ export class MdCreator {
         this.content += `- ${typeText}: ${value || 'void'}` + lineSysbol;
     }
     // 创建参数表格
-    createParamsTable(params: Params[], linkList:{name:string, path:string}[], docs: Record<string, string[][]>) {
-        const doc = {};
+    createParamsTable(params: Params[], linkList?:{name:string, path:string}[], docs?: Record<string, string[][]>) {
+        const doc:Record<string, string> = {};
         if (docs) {
             for (const item of docs['@param'] || []) {
                 doc[item[0]] = item.slice(1, item.length).join(' ').replace(/^[- ]+/g, '');
@@ -127,7 +130,7 @@ export class MdCreator {
         this.index++;
     }
     // 创建类型表格
-    createTypesTable(typeInfo: TypeDeclaration, linkList:{name:string, path:string}[]) {
+    createTypesTable(typeInfo: TypeDeclaration, linkList?:{name:string, path:string}[]) {
         if ((typeof typeInfo.value == 'string' && !typeInfo.value.length)) {
             this.content += `无` + lineSysbol;
             return;
@@ -137,13 +140,13 @@ export class MdCreator {
         const props = [];
         let tableData;
         // 只有interface和enum,object才有详情
-        if (['interface', 'enum', 'object'].includes(typeInfo.type)) {
-            tableData = typeInfo.interfaceDetail;
+        if (['interface', 'enum', 'type'].includes(typeInfo.type)) {
+            tableData = typeInfo.interfaceDetail || {};
         }else{
             return;
         }
 
-        for (const item in tableData || []) {
+        for (const item in tableData) {
             let typeValue = tableData[item]?.value.replaceAll('<', '&lt;').replaceAll('>', '&gt') || '';
             for (const linkItem of linkList || []) {
                 typeValue = typeValue.replaceAll(linkItem.name, `<a href="${linkItem.path}">${linkItem.name}</a>`);

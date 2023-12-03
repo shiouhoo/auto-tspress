@@ -6,9 +6,10 @@ import os from 'os';
 import path from 'path';
 import { MdCreator } from './mdCreate';
 import { log } from './log';
+import { escapeSpecialChars } from './utils/stringUtil';
 
 // 移动文件
-function copy(src, dest) {
+function copy(src: string, dest: string) {
     const stat = fs.statSync(src);
     if (stat.isDirectory()) {
         copyDir(src, dest);
@@ -72,7 +73,7 @@ const changeFirstPage = (startPath: string)=>{
 /** 生成文档侧边栏 */
 const createSidebar = (collectMap: CollectMap) => {
     let startPath = '';
-    for(const item of ['hooks', 'utils', 'globalTypes']) {
+    for(const item of ['hooks', 'utils', 'globalTypes'] as Array<'hooks'|'utils'|'globalTypes'>) {
         log.logDebug(`正在生成${item}的文档`);
         if(!fs.existsSync(path.join(cliPath, `/docs/${item}`))) {
             fs.mkdirSync(path.join(cliPath, `/docs/${item}`));
@@ -80,7 +81,7 @@ const createSidebar = (collectMap: CollectMap) => {
         // 文件路径
         const filePath = path.join(cliPath, `/docs/${item}.js`);
         const data = {
-            item: [],
+            item: [] as any[],
             // 点击右上方按钮跳转
             link: `/${item}/${collectMap[item]?.[0]?.filePath?.split('/')?.slice(-2).join('-') || ''}`
         };
@@ -114,56 +115,56 @@ const createSidebar = (collectMap: CollectMap) => {
 const createContent = (filePath:string, fileItem: FileItem, fileName:string, itemType:'utils'|'hooks'|'globalTypes') => {
     const mdCreator = new MdCreator();
     mdCreator.createTitle(1, fileName.replace('-', '/'));
-    mdCreator.createFileDoc(fileItem.fileDoc);
+    fileItem.fileDoc && mdCreator.createFileDoc(fileItem.fileDoc);
     mdCreator.createLinkNext();
     if(itemType === 'utils' || itemType === 'hooks') {
         // 函数
-        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数', false);
-        // mdCreator.createText(`以下为文件中的${itemType === 'hooks' ? 'hooks' : '工具函数'}`);
-        const globalTypeMap = {};
-        for(const t of fileItem.typeList.filter(item => item.isGlobal)) {
-            globalTypeMap[t.value] = t.filePath.split('/')?.slice(-2).join('-') + '.html';
+        mdCreator.createTitle(2, itemType === 'hooks' ? 'hooks' : '函数');
+
+        // 全局类型的链接
+        const globalTypeMap: Record<string, string> = {};
+        for(const t of fileItem.typeList?.filter(item => item.isGlobal) || []) {
+            globalTypeMap[t.value] = t.filePath?.split('/')?.slice(-2).join('-') + '.html';
         }
         if(Object.keys(globalTypeMap).length) {
-            for(const linkItem of fileItem.link) {
+            for(const linkItem of fileItem.link || []) {
                 if(globalTypeMap[linkItem.name]) {
                     linkItem.path = '/globalTypes/' + globalTypeMap[linkItem.name] + linkItem.path;
                 }
             }
         }
 
-        for(const func of fileItem.functionList) {
+        for(const func of fileItem.functionList || []) {
             const funcName = func.name;
             mdCreator.createTitle(3, funcName);
             mdCreator.createText(func.docs?.['@description']?.[0]?.[0] || func.docs?.comment?.[0]?.[0], '描述');
-            mdCreator.createParamsTable(func.params, fileItem.link, func.docs);
-            mdCreator.createTitle(4, '返回值', false);
+            func.params && mdCreator.createParamsTable(func.params, fileItem.link, func.docs);
+            mdCreator.createTitle(4, '返回值');
             mdCreator.createReturns(func.returns, fileItem.link);
             func.docs?.['@returns']?.[0]?.[0] && mdCreator.createText(func.docs?.['@returns']?.[0]?.[0] || '暂无', '返回值说明');
         }
     }
     // type
-    const funcTypeShow = ['utils', 'hooks'].includes(itemType) && fileItem.typeList.filter(item=> !item.isGlobal).length;
-    funcTypeShow && mdCreator.createTitle(2, '类型', false);
+    const funcTypeShow = ['utils', 'hooks'].includes(itemType) && fileItem.typeList?.filter(item=> !item.isGlobal).length;
+    funcTypeShow && mdCreator.createTitle(2, '类型');
     // 是否显示全局类型表格
-    const globalTypeTableShow = itemType === 'globalTypes' && fileItem.typeList.length;
+    const globalTypeTableShow = itemType === 'globalTypes' && fileItem.typeList?.length;
     if(funcTypeShow || globalTypeTableShow) {
         const typeList = fileItem.typeList;
-        for(const type of typeList) {
+        for(const type of typeList || []) {
             // 全局类型在局部不显示
             if(['utils', 'hooks'].includes(itemType) && type.isGlobal) continue;
 
-            const typeName = type.value;
-            mdCreator.createTitle(3, typeName + `<Badge type="tip" text=${type.type} />`);
+            const typeName = type.value.replaceAll('\n', '').replaceAll('\r', '');
+            mdCreator.createTitle(3, escapeSpecialChars(typeName) + `<Badge type="tip" text=${type.type} />`, type.id);
             // TODO 暂时不考虑多个tag存在的情况
             mdCreator.createText(type.docs?.['@description']?.[0]?.[0] || type.docs?.comment?.[0]?.[0], '描述');
-            // type.generics && mdCreator.createDescText(type.generics, { tag: '泛型' });
             if(type.type === 'module') {
-                mdCreator.createDescText(type.filePath.split('node_modules/').slice(1).join(''), { tag: '模块' });
+                mdCreator.createDescText((type.filePath || '').split('node_modules/').slice(1).join(''), { tag: '模块' });
             }
             if(type.type === 'type') {
                 if(!type.typeDetail) {
-                    mdCreator.createTsCode(type.typeValue);
+                    mdCreator.createTsCode(type.typeValue || '');
                 }else{
                     mdCreator.createTypesTable(type.typeDetail, fileItem.link);
                 }
@@ -184,10 +185,10 @@ export const createDocs = (collectMap: CollectMap) => {
 
         if (os.platform() === 'win32') {
             // Windows
-            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && vitepress dev docs --port ${config.server.port}`]);
+            child = spawn('cmd.exe', ['/c', `cd /d ${cliPath} && npm run docs:dev --port ${config.server.port}`]);
         } else {
             // macOS 或 Linux
-            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && vitepress dev docs --port ${config.server.port}`]);
+            child = spawn('sh', ['-c', `cd "${cliPath.replaceAll('\\', '/')}" && npm run docs:dev --port ${config.server.port}`]);
         }
 
         child.stdout.on('data', (data) => {

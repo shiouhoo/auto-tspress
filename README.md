@@ -24,7 +24,7 @@ pnpm i -D auto-tspress@latest
 
 ```ts
 "scripts": {
-	"tspress": "auto-tspress"
+	"doc": "auto-tspress"
 }
 ```
 
@@ -36,9 +36,9 @@ pnpm i -D auto-tspress@latest
 export default () => {
     return {
         // 要解析的文件路径,内部采用ts-morph解析，详情见：https://ts-morph.com/setup/adding-source-files#by-file-globs-or-file-paths
-        include: ['test/**/utils.ts'],
+        include: ['test/**/*.ts'],
         // 排除的文件路径
-        exclude: ['**/main.ts'],
+        exclude: ['**/main.ts', '**/views.ts'],
         // 是否开启debug模式，会打印文档生成过程中详细信息
         debug: false,
         // vitepress运行配置

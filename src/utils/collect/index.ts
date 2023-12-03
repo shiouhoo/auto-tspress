@@ -3,7 +3,7 @@ import { Project, FunctionDeclaration, Node } from 'ts-morph';
 import { collectFileDoc } from './collectDoc';
 import { collectFunction } from './collectFunc';
 import { collectEnum, collectInterface, collectType } from './collectTypes';
-import { setReturnSymbol, config, tsMorph } from '@/global';
+import { setReturnSymbol, config, tsMorph, getUnNameType } from '@/global';
 import { judgeExportedDeclarationsIsFunction } from '../functionUtil';
 import { log } from '@/log';
 import { shouldPushTypeList } from '../type/typeCheck';
@@ -41,7 +41,7 @@ export function collect() {
         log.log('-----------------------');
         log.log('开始收集文件: ' + sourceFile.getBaseName());
 
-        const fileDocMap: Record<string, string> = collectFileDoc(sourceFile);
+        const fileDocMap: Record<string, string> | undefined = collectFileDoc(sourceFile);
 
         const utilsFunctionList: FunctionItem[] = [];
         const hooksFunctionList: FunctionItem[] = [];
@@ -69,9 +69,12 @@ export function collect() {
                     // 收集link，跳转到类型详情
                     for(const t of typeList) {
                         if(!shouldPushTypeList(t)) continue;
+                        if(t.value.length > 20) {
+                            t.id = getUnNameType();
+                        }
                         linkList.push({
                             name: t.value,
-                            path: '#' + t.value.toLowerCase()
+                            path: '#' + (t.id || t.value.toLowerCase())
                         });
                         if(funcItem.classify === 'utils') {
                             utilsTypeList.push(t);
@@ -81,9 +84,9 @@ export function collect() {
                     }
                 // 类型收集
                 }else {
-                    const typeList = [];
+                    const typeList: TypeDeclaration[] = [];
                     let type;
-                    let deps;
+                    let deps: TypeDeclaration[] = [];
                     if (Node.isTypeAliasDeclaration(declaration)) {
                         log.log('✔ 找到type：' + name);
                         ({ type: type, deps } = collectType(declaration));
@@ -94,12 +97,16 @@ export function collect() {
                         log.log('✔ 找到enum：' + name);
                         ({ type, deps = typeList } = collectEnum(declaration));
                     }
-                    globalTypeList.push(type, ...deps);
+                    type && globalTypeList.push(type);
+                    globalTypeList.push(...deps);
                     typeList.push(...deps);
                     for(const t of typeList) {
+                        if(t.value.length > 20) {
+                            t.id = getUnNameType();
+                        }
                         linkList.push({
                             name: t.value,
-                            path: '#' + t.value.toLowerCase()
+                            path: '#' + (t.id || t.value.toLowerCase())
                         });
                     }
                 }
