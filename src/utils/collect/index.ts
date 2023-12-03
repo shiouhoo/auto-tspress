@@ -74,7 +74,7 @@ export function collect() {
                         }
                         linkList.push({
                             name: t.value,
-                            path: '#' + t.id || t.value.toLowerCase()
+                            path: '#' + (t.id || t.value.toLowerCase())
                         });
                         if(funcItem.classify === 'utils') {
                             utilsTypeList.push(t);
@@ -106,7 +106,7 @@ export function collect() {
                         }
                         linkList.push({
                             name: t.value,
-                            path: '#' + t.id || t.value.toLowerCase()
+                            path: '#' + (t.id || t.value.toLowerCase())
                         });
                     }
                 }

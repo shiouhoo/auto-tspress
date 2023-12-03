@@ -140,7 +140,7 @@ export class MdCreator {
         const props = [];
         let tableData;
         // 只有interface和enum,object才有详情
-        if (['interface', 'enum', 'object'].includes(typeInfo.type)) {
+        if (['interface', 'enum', 'type'].includes(typeInfo.type)) {
             tableData = typeInfo.interfaceDetail || {};
         }else{
             return;

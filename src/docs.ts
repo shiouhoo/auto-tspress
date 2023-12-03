@@ -6,6 +6,7 @@ import os from 'os';
 import path from 'path';
 import { MdCreator } from './mdCreate';
 import { log } from './log';
+import { escapeSpecialChars } from './utils/stringUtil';
 
 // 移动文件
 function copy(src: string, dest: string) {
@@ -155,7 +156,7 @@ const createContent = (filePath:string, fileItem: FileItem, fileName:string, ite
             if(['utils', 'hooks'].includes(itemType) && type.isGlobal) continue;
 
             const typeName = type.value.replaceAll('\n', '').replaceAll('\r', '');
-            mdCreator.createTitle(3, typeName + `<Badge type="tip" text=${type.type} />`, type.id);
+            mdCreator.createTitle(3, escapeSpecialChars(typeName) + `<Badge type="tip" text=${type.type} />`, type.id);
             // TODO 暂时不考虑多个tag存在的情况
             mdCreator.createText(type.docs?.['@description']?.[0]?.[0] || type.docs?.comment?.[0]?.[0], '描述');
             if(type.type === 'module') {

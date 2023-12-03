@@ -34,7 +34,7 @@ export const tsTypeIsRecord = (type: Type<ts.Type> | ts.Type) => {
 
 /** 是否应该加入类型列表解析 */
 export const shouldPushTypeList = (type: TypeDeclaration) : boolean =>{
-    return ['interface', 'object', 'enum', 'record', 'union', 'intersection', 'type', 'module'].includes(type.type) || ('array' === type.type && shouldPushTypeList(type.arrayDetail!));
+    return ['interface', 'enum', 'record', 'union', 'intersection', 'type', 'module'].includes(type.type) || ('array' === type.type && shouldPushTypeList(type.arrayDetail!));
 };
 
 /** 是否应该加入依赖数组 */
@@ -49,11 +49,15 @@ export const getPushTypeList = (type: TypeDeclaration, deps: TypeDeclaration[]) 
             result.push(type.arrayDetail!);
         }
         // 以下类型本身不需要push到typeList
-        if(!['record', 'union', 'intersection', 'object'].includes(type.type)) {
+        if(!['record', 'union', 'intersection'].includes(type.type)) {
             result.push(type);
         }
         if('union' === type.type || 'intersection' === type.type) {
-            result.push(...type.unionList!.filter((item) => shouldPushTypeList(item)));
+            result.push(...type.unionList!.reduce((res, item) => {
+                res.push(...getPushTypeList(item, [] as TypeDeclaration[]));
+                return res;
+            }, [] as TypeDeclaration[])
+            );
         }
         result.push(...deps);
     }

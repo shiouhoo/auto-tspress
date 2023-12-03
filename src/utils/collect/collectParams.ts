@@ -33,7 +33,6 @@ export const getParamsList = (
 
         paramsList.push(paramItem);
         typeList.push(...getPushTypeList(type, deps));
-
     }
     return { paramsList, typeList };
 };

@@ -133,12 +133,6 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
             type.type = 'number';
         }else if(paramType.isBoolean()) {
             type.type = 'boolean';
-        }else if(paramType.isObject() && !paramType.isClassOrInterface()) {
-            type.type = 'object';
-            const objectType = paramType.compilerType as ts.ObjectType;
-            const { detail, deps } = getObjectDetailByTsType(objectType);
-            type.interfaceDetail = detail;
-            result.deps.push(...filterTypeList(deps));
         }else if (paramType.isArray()) {
             type.type = 'array';
             const typeArguments = paramType.getTypeArguments();
@@ -187,15 +181,17 @@ export const getTypeByMorphType = (paramType: Type<ts.Type>): {
         }
         // 别名会被其他类型识别成功，所以需要放在最后
         if(paramType.getAliasSymbol() !== undefined) {
-        // 获取别名的类型
-            const aliasDeclaration = paramType.getAliasSymbol()?.getDeclarations()[0];
+            // 获取别名的类型
+            const aliasDeclaration = paramType.compilerType.symbol.declarations?.[0] as ts.TypeAliasDeclaration;
             const { value, typeValue } = getAliasValueByNode(aliasDeclaration);
+            const { detail, deps } = getTypeDetailByDeclaration(aliasDeclaration!);
+            result.deps.push(...filterTypeList(deps));
             type = {
                 value,
                 typeValue,
                 type: 'type',
-                typeDetail: type,
                 filePath: path,
+                typeDetail: detail
             };
         }
     }else{
@@ -278,9 +274,9 @@ export const getTypeByTsType = (paramType: ts.Type): {
             const aliasDeclaration = paramType.symbol.declarations?.[0] as ts.TypeAliasDeclaration;
             const { detail, deps } = getTypeDetailByDeclaration(aliasDeclaration);
             result.deps.push(...filterTypeList(deps));
-            const { value, typeValue } = getAliasValueByNode(aliasDeclaration);
+            const { typeValue } = getAliasValueByNode(aliasDeclaration);
             type = {
-                value,
+                ...type,
                 typeValue,
                 type: 'type',
                 filePath: path,
@@ -359,43 +355,13 @@ export const getIntersectionDetailByTsType = (intersectionType: ts.IntersectionT
     };
     for(const type of intersectionType?.types || []) {
         const { type: unionItem, deps } = getTypeByTsType(type);
+        console.log(unionItem);
         result.unionList.push(unionItem);
         result.deps.push(...getPushTypeList(unionItem, deps));
     }
     return result;
 };
 
-/** 根据ts内置类型获取type中的object详情 */
-export const getObjectDetailByTsType = (objectType: ts.ObjectType): {detail: InterfaceDetail, deps: TypeDeclaration[]} =>{
-    const result = {
-        detail: {} as InterfaceDetail,
-        deps: [] as TypeDeclaration[]
-    };
-    const objectDeclaration = objectType.getSymbol()?.declarations?.[0] as ts.TypeLiteralNode;
-    for(const member of objectDeclaration?.members || []) {
-        if(ts.isPropertySignature(member)) {
-            let doc: any = member.getChildren()[0] as ts.JSDoc;
-            if(doc.kind === ts.SyntaxKind.JSDoc) {
-                doc = collectDocByTsDoc(doc);
-            }else{
-                doc = null;
-            }
-
-            const typeNode = tsMorph.typeChecker.compilerObject.getTypeAtLocation(member.type!);
-            const { type, deps } = getTypeByTsType(typeNode);
-            result.deps.push(...getPushTypeList(type, deps));
-
-            result.detail[member.name.getText()] = {
-                value: (member.type?.getText() || '')as TypeUnions,
-                isIndexSignature: false,
-                isRequire: !member.questionToken,
-                doc,
-            };
-
-        }
-    }
-    return result;
-};
 /** 根据ts内置类型获取type详情 */
 export const getTypeDetailByDeclaration = (objectType: ts.Declaration): {detail: TypeDeclaration, deps: TypeDeclaration[]} =>{
     const { value } = getAliasValueByNode(objectType);
@@ -409,7 +375,7 @@ export const getTypeDetailByDeclaration = (objectType: ts.Declaration): {detail:
     };
     const objectDeclaration = objectType;
     if(objectDeclaration.kind === ts.SyntaxKind.TypeLiteral) {
-        result.detail.type = 'object';
+        result.detail.type = 'type';
         for(const member of (objectDeclaration as any)?.members || []) {
             if(ts.isPropertySignature(member)) {
                 let doc: any = member.getChildren()[0] as ts.JSDoc;
